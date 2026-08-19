@@ -11,6 +11,26 @@
 - [仕様書](docs/spec.md)
 - [開発タスク一覧](docs/TASKS.md)
 
+## 開発
+
+| 項目 | 値 |
+|---|---|
+| 言語 / UI | Kotlin / Jetpack Compose |
+| minSdk / targetSdk / compileSdk | 26 / 36 / 36 |
+| JDK | 17 |
+| DI | Hilt |
+
+```bash
+./gradlew ktlintCheck      # フォーマットチェック
+./gradlew ktlintFormat     # 自動整形
+./gradlew detekt           # 静的解析
+./gradlew lintDebug        # Android Lint
+./gradlew testDebugUnitTest
+./gradlew assembleDebug
+```
+
+CI (GitHub Actions) は push ごとに上記すべてを実行する。
+
 ## ステータス
 
-設計フェーズ。実装は未着手。
+P0(プロジェクト基盤)まで実装済み。次は P1(データ層)。

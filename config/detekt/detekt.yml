@@ -1,0 +1,16 @@
+# detekt のデフォルト設定を土台に、Compose 向けの緩和のみを記述する。
+# (buildUponDefaultConfig = true のため、ここに書いたキーだけが上書きされる)
+
+complexity:
+  TooManyFunctions:
+    ignoreAnnotated: ['Composable']
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated: ['Composable', 'Test']
+
+style:
+  MagicNumber:
+    ignoreAnnotated: ['Composable', 'Preview']
+  MaxLineLength:
+    maxLineLength: 120

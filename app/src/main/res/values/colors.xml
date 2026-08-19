@@ -1,0 +1,5 @@
+<resources>
+    <!-- P5-1 で正式なドット絵パレットに差し替える暫定色 -->
+    <color name="es_background">#0B0E1A</color>
+    <color name="ic_launcher_background">#0B0E1A</color>
+</resources>

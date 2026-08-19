@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">EarthStep</string>
+    <string name="home_title">EarthStep</string>
+    <string name="home_tagline">歩いて地球を一周する</string>
+    <string name="home_total_distance_label">累計距離</string>
+    <string name="home_xp_label">経験値</string>
+    <string name="home_version_label">バージョン %1$s</string>
+</resources>
