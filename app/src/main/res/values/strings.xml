@@ -4,5 +4,7 @@
     <string name="home_tagline">歩いて地球を一周する</string>
     <string name="home_total_distance_label">累計距離</string>
     <string name="home_xp_label">経験値</string>
+    <string name="home_today_distance_label">今日の距離</string>
+    <string name="home_lap_label">%1$d 周目</string>
     <string name="home_version_label">バージョン %1$s</string>
 </resources>

@@ -34,7 +34,8 @@ CI (GitHub Actions) は push ごとに上記すべてを実行する。
 ### Android SDK が無い環境での確認
 
 `dl.google.com` に到達できない環境では Gradle ビルドが通らない(Android SDK と Google Maven の両方が
-そのホストにあるため)。その場合でも ktlint / detekt だけは Maven Central から CLI を取得して単体で実行できる。
+そのホストにあるため)。到達できる環境なら上記コマンドはすべてローカルで実行できる。
+到達できない場合でも ktlint / detekt だけは Maven Central から CLI を取得して単体で実行できる。
 
 ```bash
 curl -L -o /tmp/ktlint.jar https://repo.maven.apache.org/maven2/com/pinterest/ktlint/ktlint-cli/1.5.0/ktlint-cli-1.5.0-all.jar
@@ -45,8 +46,14 @@ java -jar /tmp/detekt.jar --config config/detekt/detekt.yml --build-upon-default
   --input app/src/main/java,app/src/test/java
 ```
 
-コンパイル・Android Lint・ユニットテストの実行は CI 側でのみ検証される。
+ネットワークが制限された環境では、コンパイル・Android Lint・ユニットテストの実行は CI 側でのみ検証される。
+
+### データベース
+
+Room のスキーマJSONは `app/schemas/` に出力してコミットする。`EarthStepDatabase.VERSION` を上げたときは
+生成された新しいJSONを必ず含めること(`SchemaExportTest` が出し忘れを検知する)。
+マイグレーション方針は `EarthStepMigrations` の KDoc を参照。
 
 ## ステータス
 
-P0(プロジェクト基盤)まで実装済み。次は P1(データ層)。
+P1(データ層)まで実装済み。次は P2(計測エンジン)。

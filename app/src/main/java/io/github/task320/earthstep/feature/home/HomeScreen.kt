@@ -63,6 +63,15 @@ fun HomeScreen(uiState: HomeUiState, modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
+                text = stringResource(R.string.home_today_distance_label) + ": " +
+                    DistanceFormatter.formatDistance(uiState.todayDistanceMeters),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text(
+                text = stringResource(R.string.home_lap_label, uiState.currentLap),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text(
                 text = stringResource(R.string.home_version_label, uiState.versionName),
                 style = MaterialTheme.typography.labelSmall,
             )
@@ -74,6 +83,13 @@ fun HomeScreen(uiState: HomeUiState, modifier: Modifier = Modifier) {
 @Composable
 private fun HomeScreenPreview() {
     EarthStepTheme {
-        HomeScreen(uiState = HomeUiState(totalDistanceMeters = 12_345L, versionName = "0.1.0"))
+        HomeScreen(
+            uiState = HomeUiState(
+                totalDistanceMeters = 12_345L,
+                todayDistanceMeters = 2_460L,
+                currentLap = 1,
+                versionName = "0.1.0",
+            ),
+        )
     }
 }
