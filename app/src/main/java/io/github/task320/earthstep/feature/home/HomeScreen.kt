@@ -21,10 +21,7 @@ import io.github.task320.earthstep.core.common.format.DistanceFormatter
 import io.github.task320.earthstep.core.designsystem.theme.EarthStepTheme
 
 @Composable
-fun HomeRoute(
-    modifier: Modifier = Modifier,
-    viewModel: HomeViewModel = hiltViewModel(),
-) {
+fun HomeRoute(modifier: Modifier = Modifier, viewModel: HomeViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     HomeScreen(uiState = uiState, modifier = modifier)
 }

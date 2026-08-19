@@ -31,6 +31,22 @@
 
 CI (GitHub Actions) は push ごとに上記すべてを実行する。
 
+### Android SDK が無い環境での確認
+
+`dl.google.com` に到達できない環境では Gradle ビルドが通らない(Android SDK と Google Maven の両方が
+そのホストにあるため)。その場合でも ktlint / detekt だけは Maven Central から CLI を取得して単体で実行できる。
+
+```bash
+curl -L -o /tmp/ktlint.jar https://repo.maven.apache.org/maven2/com/pinterest/ktlint/ktlint-cli/1.5.0/ktlint-cli-1.5.0-all.jar
+java -jar /tmp/ktlint.jar "app/src/**/*.kt" "**/*.kts"          # --format で自動修正
+
+curl -L -o /tmp/detekt.jar https://repo.maven.apache.org/maven2/io/gitlab/arturbosch/detekt/detekt-cli/1.23.8/detekt-cli-1.23.8-all.jar
+java -jar /tmp/detekt.jar --config config/detekt/detekt.yml --build-upon-default-config \
+  --input app/src/main/java,app/src/test/java
+```
+
+コンパイル・Android Lint・ユニットテストの実行は CI 側でのみ検証される。
+
 ## ステータス
 
 P0(プロジェクト基盤)まで実装済み。次は P1(データ層)。

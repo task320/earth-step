@@ -1,9 +1,9 @@
 package io.github.task320.earthstep.core.common.format
 
 import com.google.common.truth.Truth.assertThat
+import java.util.Locale
 import org.junit.Assert.assertThrows
 import org.junit.Test
-import java.util.Locale
 
 class DistanceFormatterTest {
 

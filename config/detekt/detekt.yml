@@ -14,3 +14,6 @@ style:
     ignoreAnnotated: ['Composable', 'Preview']
   MaxLineLength:
     maxLineLength: 120
+  # @Preview の private Composable は参照が無くても未使用ではない
+  UnusedPrivateMember:
+    ignoreAnnotated: ['Preview']

@@ -4,15 +4,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
-private val EarthStepColorScheme = darkColorScheme(
-    primary = PixelGreen,
-    onPrimary = PixelInk,
-    secondary = PixelSky,
-    onSecondary = PixelInk,
-    background = PixelNight,
-    onBackground = PixelBone,
-    surface = PixelDeep,
-    onSurface = PixelBone,
+private val earthStepColorScheme = darkColorScheme(
+    primary = pixelGreen,
+    onPrimary = pixelInk,
+    secondary = pixelSky,
+    onSecondary = pixelInk,
+    background = pixelNight,
+    onBackground = pixelBone,
+    surface = pixelDeep,
+    onSurface = pixelBone,
 )
 
 /**
@@ -24,7 +24,7 @@ private val EarthStepColorScheme = darkColorScheme(
 @Composable
 fun EarthStepTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = EarthStepColorScheme,
+        colorScheme = earthStepColorScheme,
         content = content,
     )
 }
