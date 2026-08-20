@@ -2,9 +2,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-      位置情報 / 活動検知 / フォアグラウンドサービス / 通知の各権限は P3-2 で追加する。
-      ここでは権限を一切要求しない土台のみを定義する。
+      P2 の計測エンジンが使う権限のみを宣言する。
+      背景位置 (ACCESS_BACKGROUND_LOCATION)、フォアグラウンドサービス、通知の各権限は
+      常駐の仕組みを入れる P3-2 で追加する。
     -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+
+    <!-- 歩数センサーが無い端末でもインストールできる。無い場合はGPSのみで計測する (P2-12)。 -->
+    <uses-feature
+        android:name="android.hardware.sensor.stepcounter"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.location.gps"
+        android:required="false" />
 
     <application
         android:name=".EarthStepApplication"

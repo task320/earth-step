@@ -54,6 +54,14 @@ Room のスキーマJSONは `app/schemas/` に出力してコミットする。`
 生成された新しいJSONを必ず含めること(`SchemaExportTest` が出し忘れを検知する)。
 マイグレーション方針は `EarthStepMigrations` の KDoc を参照。
 
+### 計測エンジン
+
+距離計算は Android に依存しない `core/domain/measurement` に閉じてあり、
+`core/data/measurement` の各 DataSource が位置・歩数・活動判定を供給する。
+擬似走行ログ(`app/src/test/resources/measurement`)を流す `PseudoTrackDistanceTest` が
+直線・カーブ・ジッター・GPSジャンプ・トンネル欠測・モック位置の各ケースを検証する。
+
 ## ステータス
 
-P1(データ層)まで実装済み。次は P2(計測エンジン)。
+P2(計測エンジン)まで実装済み。次は P3(常駐サービス・権限・オンボーディング)。
+権限リクエストの導線が未実装のため、この時点では実機での計測は動かない。

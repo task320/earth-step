@@ -141,6 +141,7 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.play.services.location)
     implementation(libs.timber)
 
     testImplementation(libs.junit)

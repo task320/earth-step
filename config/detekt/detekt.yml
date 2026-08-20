@@ -4,12 +4,22 @@
 complexity:
   TooManyFunctions:
     ignoreAnnotated: ['Composable']
+    # 計測エンジンのような状態機械は、小さな private ハンドラへ分けるほど関数が増える。
+    # 1関数あたりを短く保つ方を優先する。
+    thresholdInClasses: 15
+  LongParameterList:
+    # DI で依存を受け取るクラスは引数が増える。まとめるための箱を作る方が読みにくい。
+    constructorThreshold: 9
 
 naming:
   FunctionNaming:
     ignoreAnnotated: ['Composable', 'Test']
 
 style:
+  ReturnCount:
+    # 位置サンプルのフィルタは「条件に合わなければ理由をつけて即返す」ガード節の連続で書く。
+    # ネストして1箇所で返すより、棄却理由と条件の対応が読み取りやすいため上限を緩める。
+    max: 10
   MagicNumber:
     ignoreAnnotated: ['Composable', 'Preview']
   MaxLineLength:

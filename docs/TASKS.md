@@ -86,10 +86,19 @@
 
 ---
 
-## P2. 計測エンジン(最重要・最難関)
+## P2. 計測エンジン(最重要・最難関) ✅ 実装済み (2026-08-20)
 
 > 位置・センサーのAPIを直接触る層と、純粋な計算層を必ず分離する。
 > 計算層(`DistanceAccumulator`)はAndroid非依存にし、擬似ログを流す単体テストで検証する。
+
+実装の対応:
+
+| 層 | 置き場所 | 中身 |
+|---|---|---|
+| 計算層(Android非依存) | `core/domain/measurement` | `Geo` / `DistanceAccumulator` / `StopDetector` / `RetroactiveDistanceBuffer` / `DailySoftCap` / `LocationIntervalPlanner` / `step/*` / `MeasurementProcessor` |
+| API層 | `core/data/measurement` | `FusedLocationDataSource` / `StepCounterDataSource` / `PlayActivityRecognitionDataSource` / `MeasurementEngine` |
+
+擬似走行ログは `app/src/test/resources/measurement/` にCSVで置き、`PseudoTrackDistanceTest` が期待距離と照合する。
 
 ### 2-A 距離計算コア(Android非依存)
 
@@ -126,6 +135,23 @@
 | P2-19 | Activity Transition API | `STILL`→`ON_FOOT` の遷移でGPSを起動、`ON_FOOT`→`STILL` でGPSを停止 | P2-18 | 1d |
 | P2-20 | 位置更新の可変間隔 | 移動中は `PRIORITY_BALANCED_POWER_ACCURACY` で5〜10秒。直線が続けば10秒、方向転換が多ければ5秒へ寄せる適応ロジック | P2-19 | 1d |
 | P2-21 | エンジン統合 | 上記入力を `MeasurementEngine` に集約し、確定距離を Repository へ流す | P2-11, P2-17, P2-20 | 1d |
+
+### P2 の実装メモ
+
+| 決めたこと | 理由 |
+|---|---|
+| 棄却した区間では起点(アンカー)を進めない | これだけで仕様1.5の3点整合性チェック(A→B→C で B が外れ値なら A→C)が特別扱い無しに成立する。低精度点を挟んでも直線の距離が失われない |
+| 加算した距離は3秒寝かせてから確定させる | 停止確定時の遡及除外(仕様1.4)を「DBへ書いた距離を後から引く」処理無しで実現するため。停止が確定したら窓の中の距離を捨てるだけでよい |
+| 起点の保持は20秒まで | それを超える欠測は歩数フォールバックの担当。GPSで直線を引くとトンネル区間が二重計上になる |
+| 距離を作るのは常にGPS・歩数のどちらか一方だけ | モードが変わる瞬間に両方の起点を捨てることで、切り替え点をまたぐ区間がどちらでも加算されない(P2-16) |
+| 距離はm未満の端数を持ち越して整数で永続化。計測終了時のみ四捨五入 | 5秒ごとの加算で丸め誤差が積もらないようにするため |
+| 活動判定は `ON_BICYCLE` / `IN_VEHICLE` を明示的に除外し、`STILL` / `UNKNOWN` では判定を変えない | 静止は速度と歩数を見る停止判定(仕様1.4)の方が確実なため |
+| 計測エンジンは入力を1本の `MeasurementInput` 列へ束ねる | 位置・歩数・活動判定が非同期に届くため、個別に状態を持つと到着順に依存したバグが出る |
+| ActivityRecognition のレシーバは動的登録 | 計測していない間に起こされても捨てるだけなので、マニフェストへ静的登録すると無駄に電力を使う |
+
+> マニフェストには `ACCESS_FINE/COARSE_LOCATION` と `ACTIVITY_RECOGNITION` のみ追加した。
+> 背景位置・フォアグラウンドサービス・通知の各権限は P3-2 で追加する。
+> 実際に権限をリクエストする導線(P3-3)がまだ無いため、この時点では実機で計測は動かない。
 
 ---
 
