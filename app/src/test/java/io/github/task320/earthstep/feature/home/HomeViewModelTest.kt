@@ -2,9 +2,20 @@ package io.github.task320.earthstep.feature.home
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import io.github.task320.earthstep.core.data.measurement.MeasurementEngine
+import io.github.task320.earthstep.core.domain.measurement.MeasurementConfig
 import io.github.task320.earthstep.core.domain.model.LifetimeStats
+import io.github.task320.earthstep.core.domain.permission.AppPermission
+import io.github.task320.earthstep.core.domain.permission.PermissionRequirements
+import io.github.task320.earthstep.core.domain.permission.PermissionState
+import io.github.task320.earthstep.testing.FakeActivityRecognitionDataSource
 import io.github.task320.earthstep.testing.FakeAppBuildInfo
+import io.github.task320.earthstep.testing.FakeLocationDataSource
+import io.github.task320.earthstep.testing.FakeMeasurementStateRepository
+import io.github.task320.earthstep.testing.FakePermissionChecker
 import io.github.task320.earthstep.testing.FakeProgressRepository
+import io.github.task320.earthstep.testing.FakeStepDataSource
+import io.github.task320.earthstep.testing.FakeTimeSource
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,6 +31,8 @@ import org.junit.Test
 class HomeViewModelTest {
 
     private val progressRepository = FakeProgressRepository()
+    private val permissionChecker = FakePermissionChecker()
+    private val required = PermissionRequirements.requiredOn(sdkInt = 33)
 
     @Before
     fun setUp() {
@@ -41,6 +54,7 @@ class HomeViewModelTest {
             assertThat(state.totalDistanceMeters).isEqualTo(0L)
             assertThat(state.todayDistanceMeters).isEqualTo(0L)
             assertThat(state.currentLap).isEqualTo(1)
+            assertThat(state.measuring).isFalse()
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -71,8 +85,61 @@ class HomeViewModelTest {
         }
     }
 
+    @Test
+    fun `権限の状態が状態に載る`() {
+        // P3-9: 位置情報だけ許可された状態。
+        permissionChecker.state = PermissionState(
+            granted = setOf(AppPermission.FINE_LOCATION),
+            required = required,
+        )
+        runTest {
+            val viewModel = viewModel()
+
+            viewModel.uiState.test {
+                val state = expectMostRecentItem()
+                assertThat(state.permissionState.canMeasure).isTrue()
+                assertThat(state.permissionState.canMeasureInBackground).isFalse()
+                assertThat(HomeWarning.from(state.permissionState))
+                    .contains(HomeWarning.MISSING_BACKGROUND_LOCATION)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    @Test
+    fun `refreshPermissionsで許可状態を読み直す`() = runTest {
+        permissionChecker.state = PermissionState(required = required)
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            skipItems(1)
+
+            permissionChecker.state = PermissionState(granted = required, required = required)
+            viewModel.refreshPermissions()
+
+            assertThat(expectMostRecentItem().permissionState.canMeasureInBackground).isTrue()
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
     private fun viewModel(stats: LifetimeStats? = null): HomeViewModel {
         val repository = stats?.let { FakeProgressRepository(it) } ?: progressRepository
-        return HomeViewModel(FakeAppBuildInfo(versionName = "1.2.3"), repository)
+        return HomeViewModel(
+            appBuildInfo = FakeAppBuildInfo(versionName = "1.2.3"),
+            progressRepository = repository,
+            measurementEngine = engine(repository),
+            permissionChecker = permissionChecker,
+        )
     }
+
+    /** 状態(`status`)を読むためだけに使う。`run` は呼ばないので購読は始まらない。 */
+    private fun engine(repository: FakeProgressRepository) = MeasurementEngine(
+        locationDataSource = FakeLocationDataSource(),
+        stepDataSource = FakeStepDataSource(),
+        activityRecognitionDataSource = FakeActivityRecognitionDataSource(),
+        progressRepository = repository,
+        measurementStateRepository = FakeMeasurementStateRepository(),
+        timeSource = FakeTimeSource(),
+        config = MeasurementConfig(),
+    )
 }

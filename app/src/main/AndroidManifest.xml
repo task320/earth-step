@@ -1,14 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!--
-      P2 の計測エンジンが使う権限のみを宣言する。
-      背景位置 (ACCESS_BACKGROUND_LOCATION)、フォアグラウンドサービス、通知の各権限は
-      常駐の仕組みを入れる P3-2 で追加する。
-    -->
+    <!-- 計測に使う権限 (仕様7.1 / P3-2) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- 画面を閉じていても歩いた分を数えるために必要。Android 11+ は設定画面からのみ許可できる。 -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+
+    <!-- 常駐と通知 (仕様7.1-3/4) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- 再起動後に計測を再開するため (P3-5) -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!--
+      バッテリー最適化の除外を直接お願いするため (仕様7.2 / P3-7)。
+      Google Play では用途の申告が必要な制限付き権限のため、P9-3 で審査対応する。
+      拒否されても計測は続く設計にしてある。
+    -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <!-- 歩数センサーが無い端末でもインストールできる。無い場合はGPSのみで計測する (P2-12)。 -->
     <uses-feature
@@ -40,6 +53,26 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+          計測の常駐サービス (P3-1)。
+          Android 14+ は foregroundServiceType の宣言が必須で、
+          未指定だと起動時に SecurityException で落ちる (仕様7.1-4)。
+        -->
+        <service
+            android:name=".feature.measurement.MeasurementService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
+        <!-- 再起動後の自動復帰 (P3-5)。BOOT_COMPLETED はシステムからの送信なので exported が要る。 -->
+        <receiver
+            android:name=".feature.measurement.BootCompletedReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

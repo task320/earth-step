@@ -7,4 +7,36 @@
     <string name="home_today_distance_label">今日の距離</string>
     <string name="home_lap_label">%1$d 周目</string>
     <string name="home_version_label">バージョン %1$s</string>
+
+    <!-- 常駐通知 (P3-1) -->
+    <string name="notification_channel_measurement_name">計測中の表示</string>
+    <string name="notification_channel_measurement_description">歩いた距離を数えている間ずっと表示されます</string>
+    <string name="notification_measurement_title">累計 %1$s</string>
+    <string name="notification_measurement_next">次は「%1$s」まで %2$s</string>
+    <string name="notification_measurement_all_achieved">100個すべて達成しました</string>
+
+    <!-- オンボーディング (P3-8) -->
+    <string name="onboarding_next">次へ</string>
+    <string name="onboarding_skip">あとで設定する</string>
+    <string name="onboarding_finish">はじめる</string>
+    <string name="onboarding_rules_title">歩いて地球を一周する</string>
+    <string name="onboarding_rules_body">徒歩と走行で進んだ距離が、そのまま経験値になります。1m = 1XP。実在する100個の距離を短い順に達成しながら、地球一周の40,075kmを目指します。自転車や乗り物での移動は数えません。</string>
+    <string name="onboarding_location_title">距離を測るために位置情報を使います</string>
+    <string name="onboarding_location_body">歩いた距離は端末の位置情報から計算します。移動の記録は端末の中だけに保存され、外部へ送信されることはありません。</string>
+    <string name="onboarding_location_action">位置情報を許可する</string>
+    <string name="onboarding_background_location_title">画面を閉じていても数えるために</string>
+    <string name="onboarding_background_location_body">アプリを開いていない間の移動も数えるには、位置情報を「常に許可」にする必要があります。設定画面が開いたら、位置情報の項目から「常に許可」を選んでください。</string>
+    <string name="onboarding_background_location_action">設定を開く</string>
+    <string name="onboarding_notification_title">通知とバッテリーの設定</string>
+    <string name="onboarding_notification_body">計測中は常駐通知で累計距離を表示します。マイルストーンに到達したときの通知にも使います。あわせてバッテリー最適化の対象から外すと、計測が途中で止まりにくくなります。どちらも許可しなくても計測は動きます。</string>
+    <string name="onboarding_notification_action">通知とバッテリーを設定する</string>
+
+    <!-- 権限が欠けているときの警告 (P3-9) -->
+    <string name="home_permission_warning_title">計測できない設定があります</string>
+    <string name="home_permission_missing_location">位置情報が許可されていないため、距離を測れません</string>
+    <string name="home_permission_missing_background_location">「常に許可」でないため、アプリを閉じている間は数えられません</string>
+    <string name="home_permission_missing_activity_recognition">活動検知が許可されていないため、乗り物での移動を除外できません</string>
+    <string name="home_permission_missing_notification">通知が許可されていないため、達成のお知らせが届きません</string>
+    <string name="home_permission_battery_optimization">バッテリー最適化の対象のため、計測が止まることがあります</string>
+    <string name="home_permission_open_settings">設定を開く</string>
 </resources>

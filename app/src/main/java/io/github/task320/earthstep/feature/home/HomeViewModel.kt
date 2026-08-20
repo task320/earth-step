@@ -4,34 +4,50 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.task320.earthstep.core.common.AppBuildInfo
+import io.github.task320.earthstep.core.data.measurement.MeasurementEngine
+import io.github.task320.earthstep.core.domain.permission.PermissionChecker
 import io.github.task320.earthstep.core.domain.repository.ProgressRepository
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(appBuildInfo: AppBuildInfo, progressRepository: ProgressRepository) :
-    ViewModel() {
+class HomeViewModel @Inject constructor(
+    appBuildInfo: AppBuildInfo,
+    progressRepository: ProgressRepository,
+    measurementEngine: MeasurementEngine,
+    private val permissionChecker: PermissionChecker,
+) : ViewModel() {
 
-    private val initialState = HomeUiState.initial(appBuildInfo.versionName)
+    private val permissionState = MutableStateFlow(permissionChecker.currentState())
 
     val uiState: StateFlow<HomeUiState> = combine(
         progressRepository.lifetimeStats,
         progressRepository.todayDistanceMeters,
-    ) { stats, todayMeters ->
+        measurementEngine.status,
+        permissionState,
+    ) { stats, todayMeters, status, permissions ->
         HomeUiState(
             totalDistanceMeters = stats.totalDistanceMeters,
             todayDistanceMeters = todayMeters,
             currentLap = stats.currentLap,
+            measuring = status.running,
+            permissionState = permissions,
             versionName = appBuildInfo.versionName,
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
-        initialValue = initialState,
+        initialValue = HomeUiState.initial(appBuildInfo.versionName),
     )
+
+    /** 設定画面から戻ってきたときなど、権限の状態を読み直す(P3-9)。 */
+    fun refreshPermissions() {
+        permissionState.value = permissionChecker.currentState()
+    }
 
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L

@@ -3,14 +3,19 @@ package io.github.task320.earthstep.feature.home
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -19,19 +24,32 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.task320.earthstep.R
 import io.github.task320.earthstep.core.common.format.DistanceFormatter
 import io.github.task320.earthstep.core.designsystem.theme.EarthStepTheme
+import io.github.task320.earthstep.core.domain.permission.AppPermission
+import io.github.task320.earthstep.core.domain.permission.PermissionState
+import io.github.task320.earthstep.feature.permission.PermissionIntents
+import io.github.task320.earthstep.ui.OnLifecycleResume
 
 @Composable
 fun HomeRoute(modifier: Modifier = Modifier, viewModel: HomeViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    HomeScreen(uiState = uiState, modifier = modifier)
+    val context = LocalContext.current
+
+    // 設定画面から戻ってきたときに警告表示を最新にする(P3-9)。
+    OnLifecycleResume { viewModel.refreshPermissions() }
+
+    HomeScreen(
+        uiState = uiState,
+        onOpenSettings = { PermissionIntents.openAppSettings(context) },
+        modifier = modifier,
+    )
 }
 
 /**
  * ホーム画面。
- * 現時点では土台確認用のプレースホルダで、実際の進捗表示は P5-3 で作り込む。
+ * 現時点では進捗の数値と権限の警告のみ。作り込みは P5-3 で行う。
  */
 @Composable
-fun HomeScreen(uiState: HomeUiState, modifier: Modifier = Modifier) {
+fun HomeScreen(uiState: HomeUiState, onOpenSettings: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
@@ -71,10 +89,54 @@ fun HomeScreen(uiState: HomeUiState, modifier: Modifier = Modifier) {
                 text = stringResource(R.string.home_lap_label, uiState.currentLap),
                 style = MaterialTheme.typography.bodyMedium,
             )
+
+            PermissionWarnings(
+                permissionState = uiState.permissionState,
+                onOpenSettings = onOpenSettings,
+            )
+
             Text(
                 text = stringResource(R.string.home_version_label, uiState.versionName),
                 style = MaterialTheme.typography.labelSmall,
             )
+        }
+    }
+}
+
+/** 権限が欠けている状態を常時表示し、再取得の導線を出す(P3-9)。 */
+@Composable
+private fun PermissionWarnings(
+    permissionState: PermissionState,
+    onOpenSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val warnings = HomeWarning.from(permissionState)
+    if (warnings.isEmpty()) return
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        ),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.home_permission_warning_title),
+                style = MaterialTheme.typography.titleSmall,
+            )
+            warnings.forEach { warning ->
+                Text(
+                    text = "・" + stringResource(warning.messageRes),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            TextButton(onClick = onOpenSettings) {
+                Text(text = stringResource(R.string.home_permission_open_settings))
+            }
         }
     }
 }
@@ -88,8 +150,13 @@ private fun HomeScreenPreview() {
                 totalDistanceMeters = 12_345L,
                 todayDistanceMeters = 2_460L,
                 currentLap = 1,
+                permissionState = PermissionState(
+                    granted = setOf(AppPermission.FINE_LOCATION),
+                    required = setOf(AppPermission.FINE_LOCATION, AppPermission.BACKGROUND_LOCATION),
+                ),
                 versionName = "0.1.0",
             ),
+            onOpenSettings = {},
         )
     }
 }

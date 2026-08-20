@@ -5,5 +5,6 @@ package io.github.task320.earthstep.navigation
  * P5-15 でマップ・達成記録・設定を追加し、通知からのディープリンクもここへ集約する。
  */
 enum class EarthStepDestination(val route: String) {
+    ONBOARDING("onboarding"),
     HOME("home"),
 }
