@@ -19,7 +19,10 @@ class RecordDistanceUseCaseTest {
 
     private val progressRepository = FakeProgressRepository()
     private val milestoneRepository = FakeMilestoneRepository()
-    private val recordDistance = RecordDistanceUseCase(progressRepository, milestoneRepository)
+    private val sentEvents = mutableListOf<ProgressEvent>()
+    private val recordDistance = RecordDistanceUseCase(progressRepository, milestoneRepository) { events ->
+        sentEvents += events
+    }
 
     private val at = Instant.parse("2026-08-20T03:00:00Z")
     private val lap = Earth.CIRCUMFERENCE_METERS
@@ -163,6 +166,21 @@ class RecordDistanceUseCaseTest {
             .containsExactly(2)
         assertThat(events.filterIsInstance<ProgressEvent.LapMarkerReached>().map { it.lapNumber })
             .containsExactly(2, 2, 2)
+    }
+
+    @Test
+    fun `起きた出来事は受け取り口へも流れる`() = runTest {
+        // P5-12 / P5-13: 通知と演出キューはここから枝分かれする。
+        val events = recordDistance(300L, at)
+
+        assertThat(sentEvents).containsExactlyElementsIn(events)
+    }
+
+    @Test
+    fun `何も起きなければ受け取り口は呼ばれない`() = runTest {
+        recordDistance(10L, at)
+
+        assertThat(sentEvents).isEmpty()
     }
 
     @Test

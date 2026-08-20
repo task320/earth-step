@@ -4,6 +4,7 @@ import io.github.task320.earthstep.core.domain.milestone.MilestoneCatalog
 import io.github.task320.earthstep.core.domain.progress.Earth
 import io.github.task320.earthstep.core.domain.progress.LapCalculator
 import io.github.task320.earthstep.core.domain.progress.ProgressEvent
+import io.github.task320.earthstep.core.domain.progress.ProgressEventSink
 import io.github.task320.earthstep.core.domain.repository.MilestoneRepository
 import io.github.task320.earthstep.core.domain.repository.ProgressRepository
 import java.time.Instant
@@ -24,11 +25,15 @@ import kotlinx.coroutines.flow.first
  * - **周回**: 周回数は累計距離から一意に決まるので、毎回計算し直して上書きする。
  *   カウンタを+1する持ち方だと、取りこぼしや二重処理でずれたまま戻らなくなる。
  * - **周内マーカー**: 演出のためだけの通知で永続化しない。こちらは範囲判定で出す。
+ *
+ * 起きた出来事は [ProgressEventSink] へ渡す。通知を出すのも演出を貯めるのも
+ * 「距離を記録した結果」なので、呼び出し側に回すと渡し忘れる余地が生まれる。
  */
 @Singleton
 class RecordDistanceUseCase @Inject constructor(
     private val progressRepository: ProgressRepository,
     private val milestoneRepository: MilestoneRepository,
+    private val progressEventSink: ProgressEventSink,
 ) {
 
     /**
@@ -47,7 +52,11 @@ class RecordDistanceUseCase @Inject constructor(
             addAll(recordCompletedLaps(previousMeters, totalMeters, at))
             addAll(markersBetween(previousMeters, totalMeters))
         }
-        return events.sortedBy { it.totalDistanceMeters }
+        val ordered = events.sortedBy { it.totalDistanceMeters }
+        if (ordered.isNotEmpty()) {
+            progressEventSink.onEvents(ordered)
+        }
+        return ordered
     }
 
     /** 累計距離に届いていて、まだ記録が無いマイルストーンを記録する。 */

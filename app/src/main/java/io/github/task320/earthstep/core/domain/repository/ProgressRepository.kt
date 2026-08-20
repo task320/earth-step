@@ -50,4 +50,11 @@ interface ProgressRepository {
 
     /** 日別ログの合計から累計距離を再計算して保存する(仕様6.4 の競合解決で使う)。 */
     suspend fun recalculateTotalFromDailyLogs(): Long
+
+    /**
+     * 距離の記録をすべて消す(P5-14 のリセット)。
+     * 歩幅の較正値も初期値へ戻す。距離を消したのに歩幅だけ残すと、
+     * 「まっさらから始め直した」状態にならない。
+     */
+    suspend fun resetAll()
 }

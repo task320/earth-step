@@ -28,4 +28,7 @@ interface MilestoneRepository {
      * @return 新規に記録されたら true、既に記録済みなら false。
      */
     suspend fun recordAchievement(milestoneIndex: Int, achievedAt: Instant, distanceMeters: Long): Boolean
+
+    /** 達成記録をすべて消す(P5-14 のリセット)。 */
+    suspend fun resetAll()
 }

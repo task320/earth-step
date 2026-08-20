@@ -59,6 +59,12 @@ class FakeProgressRepository(initialStats: LifetimeStats = LifetimeStats.INITIAL
         statsState.value = statsState.value.copy(strideLengthCm = strideLengthCm)
     }
 
+    override suspend fun resetAll() {
+        statsState.value = LifetimeStats.INITIAL
+        dailyState.value = emptyMap()
+        lapState.value = emptyList()
+    }
+
     override suspend fun recalculateTotalFromDailyLogs(): Long {
         val total = dailyState.value.values.sum()
         statsState.value = statsState.value.copy(totalDistanceMeters = total)

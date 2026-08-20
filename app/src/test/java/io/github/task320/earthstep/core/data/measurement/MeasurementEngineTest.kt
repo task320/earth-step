@@ -6,6 +6,7 @@ import io.github.task320.earthstep.core.domain.measurement.model.ActivityUpdate
 import io.github.task320.earthstep.core.domain.measurement.model.LocationSample
 import io.github.task320.earthstep.core.domain.measurement.model.StepSample
 import io.github.task320.earthstep.core.domain.measurement.model.UserActivity
+import io.github.task320.earthstep.core.domain.progress.ProgressEvent
 import io.github.task320.earthstep.core.domain.usecase.RecordDistanceUseCase
 import io.github.task320.earthstep.testing.FakeActivityRecognitionDataSource
 import io.github.task320.earthstep.testing.FakeLocationDataSource
@@ -34,6 +35,7 @@ class MeasurementEngineTest {
     private val measurementStateRepository = FakeMeasurementStateRepository()
     private val milestoneRepository = FakeMilestoneRepository()
     private val timeSource = FakeTimeSource()
+    private val sentEvents = mutableListOf<ProgressEvent>()
 
     @Test
     fun `GPSで歩いた距離が整数メートルで永続化される`() = runTest {
@@ -153,6 +155,27 @@ class MeasurementEngineTest {
     }
 
     @Test
+    fun `達成した出来事が通知と演出キューへ流れる`() = runTest {
+        // P5-12 / P5-13: エンジンは出来事を受け取り口へ渡すところまで担う。
+        val engine = engine()
+        val job = launch { engine.run() }
+        runCurrent()
+
+        // 300m 歩いて #1 に到達する。
+        val samples = LocationTrack(startTimestampMillis = timeSource.now().toEpochMilli())
+            .mark(speedMps = 1.4f)
+            .walkEast(times = 50, eastMeters = 7.0, intervalMillis = 5_000, speedMps = 1.4f)
+            .build()
+        samples.forEach { sample ->
+            locationDataSource.emit(sample)
+            runCurrent()
+        }
+        job.cancelAndJoin()
+
+        assertThat(sentEvents.filterIsInstance<ProgressEvent.MilestoneAchieved>()).isNotEmpty()
+    }
+
+    @Test
     fun `計測中は状態が running になり終了で戻る`() = runTest {
         val engine = engine()
         val job = launch { engine.run() }
@@ -170,7 +193,11 @@ class MeasurementEngineTest {
         stepDataSource = stepDataSource,
         activityRecognitionDataSource = activityDataSource,
         progressRepository = progressRepository,
-        recordDistance = RecordDistanceUseCase(progressRepository, milestoneRepository),
+        recordDistance = RecordDistanceUseCase(
+            progressRepository = progressRepository,
+            milestoneRepository = milestoneRepository,
+            progressEventSink = { events -> sentEvents += events },
+        ),
         measurementStateRepository = measurementStateRepository,
         timeSource = timeSource,
         config = MeasurementConfig(),

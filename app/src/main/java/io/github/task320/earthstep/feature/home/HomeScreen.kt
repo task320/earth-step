@@ -2,33 +2,38 @@ package io.github.task320.earthstep.feature.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.task320.earthstep.R
 import io.github.task320.earthstep.core.common.format.DistanceFormatter
+import io.github.task320.earthstep.core.designsystem.component.PixelPanel
+import io.github.task320.earthstep.core.designsystem.component.PixelProgressBar
+import io.github.task320.earthstep.core.designsystem.component.PixelTextButton
 import io.github.task320.earthstep.core.designsystem.theme.EarthStepTheme
+import io.github.task320.earthstep.core.designsystem.theme.PixelDimens
+import io.github.task320.earthstep.core.designsystem.theme.PixelPalette
 import io.github.task320.earthstep.core.domain.permission.AppPermission
 import io.github.task320.earthstep.core.domain.permission.PermissionState
 import io.github.task320.earthstep.core.domain.progress.Earth
 import io.github.task320.earthstep.core.domain.progress.ProgressSummary
+import io.github.task320.earthstep.feature.map.WorldMapView
 import io.github.task320.earthstep.feature.permission.PermissionIntents
 import io.github.task320.earthstep.ui.OnLifecycleResume
 
@@ -48,53 +53,33 @@ fun HomeRoute(modifier: Modifier = Modifier, viewModel: HomeViewModel = hiltView
 }
 
 /**
- * ホーム画面。
- * 現時点では進捗の数値と権限の警告のみ。作り込みは P5-3 で行う。
+ * ホーム画面(P5-3)。
+ *
+ * 出す数字は 累計距離・XP・当日距離・周回数・次のマイルストーンまでの距離 と進捗バー。
+ * 一番大きく出すのは累計距離。このゲームで積み上がるのはそれだけで、
+ * XPは同じ値の別表現でしかないため、同じ大きさで2つ並べると視線が散る。
  */
 @Composable
 fun HomeScreen(uiState: HomeUiState, onOpenSettings: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
+    val progress = uiState.progress
+
+    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .verticalScroll(rememberScrollState())
+                .padding(PixelDimens.ScreenPadding),
+            verticalArrangement = Arrangement.spacedBy(PixelDimens.SpaceMedium),
         ) {
-            Text(
-                text = stringResource(R.string.home_title),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                text = stringResource(R.string.home_tagline),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            val progress = uiState.progress
-            Text(
-                text = stringResource(R.string.home_total_distance_label) + ": " +
-                    DistanceFormatter.formatDistance(progress.totalDistanceMeters),
-                style = MaterialTheme.typography.titleLarge,
-            )
-            Text(
-                text = stringResource(R.string.home_xp_label) + ": " +
-                    DistanceFormatter.formatXp(progress.xp),
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Text(
-                text = stringResource(R.string.home_today_distance_label) + ": " +
-                    DistanceFormatter.formatDistance(progress.todayDistanceMeters),
-                style = MaterialTheme.typography.titleMedium,
-            )
+            TotalDistancePanel(progress = progress, measuring = uiState.measuring)
+
+            WorldMapView(lapRatio = progress.lapProgress.ratio, lapSkin = progress.lapSkin)
 
             // 2周目以降はマイルストーンを再提示せず、周回の進捗だけを見せる(仕様4.1 / P4-7)。
             if (progress.showsMilestoneList) {
-                NextMilestone(progress = progress)
+                NextMilestonePanel(progress = progress)
             } else {
-                LapProgressText(progress = progress)
+                LapProgressPanel(progress = progress)
             }
 
             PermissionWarnings(
@@ -105,20 +90,62 @@ fun HomeScreen(uiState: HomeUiState, onOpenSettings: () -> Unit, modifier: Modif
             Text(
                 text = stringResource(R.string.home_version_label, uiState.versionName),
                 style = MaterialTheme.typography.labelSmall,
+                color = PixelPalette.Mist,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
             )
         }
     }
 }
 
-/** 次のマイルストーンまでの残り(P4-4)。 */
 @Composable
-private fun NextMilestone(progress: ProgressSummary, modifier: Modifier = Modifier) {
+private fun TotalDistancePanel(progress: ProgressSummary, measuring: Boolean, modifier: Modifier = Modifier) {
+    PixelPanel(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = stringResource(R.string.home_total_distance_label),
+            style = MaterialTheme.typography.labelMedium,
+            color = PixelPalette.Mist,
+        )
+        Text(
+            text = DistanceFormatter.formatDistance(progress.totalDistanceMeters),
+            style = MaterialTheme.typography.displaySmall,
+            color = PixelPalette.Gold,
+        )
+        Text(
+            text = DistanceFormatter.formatXp(progress.xp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = PixelPalette.Mist,
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = stringResource(R.string.home_today_distance_label) + " " +
+                    DistanceFormatter.formatDistance(progress.todayDistanceMeters),
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Text(
+                text = stringResource(R.string.home_lap_label, progress.lapProgress.lapNumber),
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        Text(
+            text = stringResource(
+                if (measuring) R.string.home_measuring else R.string.home_not_measuring,
+            ),
+            style = MaterialTheme.typography.labelSmall,
+            color = if (measuring) PixelPalette.Green else PixelPalette.Mist,
+        )
+    }
+}
+
+/** 次のマイルストーンまでの残りと進捗バー(P4-4 / P5-3)。 */
+@Composable
+private fun NextMilestonePanel(progress: ProgressSummary, modifier: Modifier = Modifier) {
     val next = progress.nextMilestone
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+    PixelPanel(modifier = modifier) {
         Text(
             text = if (next == null) {
                 stringResource(R.string.home_all_milestones_achieved)
@@ -131,25 +158,23 @@ private fun NextMilestone(progress: ProgressSummary, modifier: Modifier = Modifi
             },
             style = MaterialTheme.typography.bodyMedium,
         )
-        LinearProgressIndicator(
-            progress = { progress.milestoneRatio },
-            modifier = Modifier.fillMaxWidth(),
+        PixelProgressBar(progress = progress.milestoneRatio)
+        Text(
+            text = stringResource(
+                R.string.home_milestone_count,
+                progress.achievedMilestoneCount,
+                io.github.task320.earthstep.core.domain.milestone.MilestoneCatalog.SIZE,
+            ),
+            style = MaterialTheme.typography.labelSmall,
+            color = PixelPalette.Mist,
         )
     }
 }
 
 /** 周回カウンターと周内の進捗(仕様4.1 / P4-7)。 */
 @Composable
-private fun LapProgressText(progress: ProgressSummary, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = stringResource(R.string.home_lap_label, progress.lapProgress.lapNumber),
-            style = MaterialTheme.typography.titleMedium,
-        )
+private fun LapProgressPanel(progress: ProgressSummary, modifier: Modifier = Modifier) {
+    PixelPanel(modifier = modifier) {
         Text(
             text = stringResource(
                 R.string.home_lap_progress_label,
@@ -158,10 +183,7 @@ private fun LapProgressText(progress: ProgressSummary, modifier: Modifier = Modi
             ),
             style = MaterialTheme.typography.bodyMedium,
         )
-        LinearProgressIndicator(
-            progress = { progress.lapProgress.ratio },
-            modifier = Modifier.fillMaxWidth(),
-        )
+        PixelProgressBar(progress = progress.lapProgress.ratio)
     }
 }
 
@@ -175,41 +197,33 @@ private fun PermissionWarnings(
     val warnings = HomeWarning.from(permissionState)
     if (warnings.isEmpty()) return
 
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer,
-            contentColor = MaterialTheme.colorScheme.onErrorContainer,
-        ),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
+    PixelPanel(modifier = modifier, borderColor = PixelPalette.Rose) {
+        Text(
+            text = stringResource(R.string.home_permission_warning_title),
+            style = MaterialTheme.typography.titleSmall,
+            color = PixelPalette.Rose,
+        )
+        warnings.forEach { warning ->
             Text(
-                text = stringResource(R.string.home_permission_warning_title),
-                style = MaterialTheme.typography.titleSmall,
+                text = "・" + stringResource(warning.messageRes),
+                style = MaterialTheme.typography.bodySmall,
             )
-            warnings.forEach { warning ->
-                Text(
-                    text = "・" + stringResource(warning.messageRes),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            TextButton(onClick = onOpenSettings) {
-                Text(text = stringResource(R.string.home_permission_open_settings))
-            }
         }
+        PixelTextButton(
+            text = stringResource(R.string.home_permission_open_settings),
+            onClick = onOpenSettings,
+        )
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, backgroundColor = 0xFF0B0E1A)
 @Composable
 private fun HomeScreenPreview() {
     EarthStepTheme {
         HomeScreen(
             uiState = HomeUiState(
                 progress = ProgressSummary.of(totalDistanceMeters = 12_345L, todayDistanceMeters = 2_460L),
+                measuring = true,
                 permissionState = PermissionState(
                     granted = setOf(AppPermission.FINE_LOCATION),
                     required = setOf(AppPermission.FINE_LOCATION, AppPermission.BACKGROUND_LOCATION),

@@ -146,7 +146,7 @@ class HomeViewModelTest {
         stepDataSource = FakeStepDataSource(),
         activityRecognitionDataSource = FakeActivityRecognitionDataSource(),
         progressRepository = repository,
-        recordDistance = RecordDistanceUseCase(repository, FakeMilestoneRepository()),
+        recordDistance = RecordDistanceUseCase(repository, FakeMilestoneRepository()) { },
         measurementStateRepository = FakeMeasurementStateRepository(),
         timeSource = FakeTimeSource(),
         config = MeasurementConfig(),

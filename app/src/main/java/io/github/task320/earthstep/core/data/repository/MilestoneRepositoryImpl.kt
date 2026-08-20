@@ -44,6 +44,10 @@ class MilestoneRepositoryImpl @Inject constructor(
             rowId != IGNORED_ROW_ID
         }
 
+    override suspend fun resetAll() = withContext(ioDispatcher) {
+        milestoneAchievementDao.deleteAll()
+    }
+
     private companion object {
         /** `OnConflictStrategy.IGNORE` で挿入がスキップされたときの戻り値。 */
         const val IGNORED_ROW_ID = -1L

@@ -36,5 +36,9 @@ class FakeMilestoneRepository : MilestoneRepository {
         return true
     }
 
+    override suspend fun resetAll() {
+        state.value = emptyMap()
+    }
+
     fun recordedIndexes(): List<Int> = state.value.keys.sorted()
 }

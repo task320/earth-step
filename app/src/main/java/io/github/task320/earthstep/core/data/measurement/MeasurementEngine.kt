@@ -162,7 +162,7 @@ class MeasurementEngine @Inject constructor(
         val at = Instant.ofEpochMilli(timestampMillis)
         val allowed = dailyCap.allow(timeSource.dateOf(at), meters)
         if (allowed > 0L) {
-            // 距離の加算とマイルストーン判定は必ずこの経路を通す(P4-2)。
+            // 距離の加算・マイルストーン判定・通知は必ずこの経路を通す(P4-2 / P5-12)。
             recordDistance(allowed, at)
         }
         if (dailyCap.lastDiscardedMeters > 0L) {

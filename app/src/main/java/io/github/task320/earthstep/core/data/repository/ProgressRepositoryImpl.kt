@@ -103,6 +103,20 @@ class ProgressRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun resetAll() = withContext(ioDispatcher) {
+        database.withTransaction {
+            dailyLogDao.deleteAll()
+            lapRecordDao.deleteAll()
+            lifetimeStatsDao.insertIfAbsent(LifetimeStatsEntity())
+            lifetimeStatsDao.setTotalDistance(0L, LifetimeStatsEntity.SINGLETON_ID)
+            lifetimeStatsDao.setCurrentLap(1, LifetimeStatsEntity.SINGLETON_ID)
+            lifetimeStatsDao.setStrideLengthCm(
+                LifetimeStats.DEFAULT_STRIDE_LENGTH_CM,
+                LifetimeStatsEntity.SINGLETON_ID,
+            )
+        }
+    }
+
     /** 単一行が無ければ既定値で作る。更新系はすべてUPDATE文なので、先に行の存在を保証する。 */
     private suspend fun ensureStatsRow() {
         lifetimeStatsDao.insertIfAbsent(LifetimeStatsEntity())

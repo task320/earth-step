@@ -13,7 +13,9 @@ import io.github.task320.earthstep.core.domain.measurement.MeasurementConfig
 import io.github.task320.earthstep.core.domain.measurement.source.ActivityRecognitionDataSource
 import io.github.task320.earthstep.core.domain.measurement.source.LocationDataSource
 import io.github.task320.earthstep.core.domain.measurement.source.StepDataSource
+import io.github.task320.earthstep.core.domain.progress.ProgressEventSink
 import io.github.task320.earthstep.core.domain.repository.MeasurementStateRepository
+import io.github.task320.earthstep.feature.celebration.NotifyingProgressEventSink
 import javax.inject.Singleton
 
 @Module
@@ -33,6 +35,10 @@ abstract class MeasurementModule {
     abstract fun bindActivityRecognitionDataSource(
         impl: PlayActivityRecognitionDataSource,
     ): ActivityRecognitionDataSource
+
+    @Binds
+    @Singleton
+    abstract fun bindProgressEventSink(impl: NotifyingProgressEventSink): ProgressEventSink
 
     @Binds
     @Singleton

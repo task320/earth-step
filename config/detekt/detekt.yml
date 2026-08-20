@@ -10,6 +10,11 @@ complexity:
   LongParameterList:
     # DI で依存を受け取るクラスは引数が増える。まとめるための箱を作る方が読みにくい。
     constructorThreshold: 9
+    # Composable は「状態 + コールバック + Modifier」で引数が増えるのが普通の形。
+    ignoreAnnotated: ['Composable']
+  LongMethod:
+    # 画面の組み立ては上から下へ読める1本の関数の方が追いやすい。
+    ignoreAnnotated: ['Composable']
 
 naming:
   FunctionNaming:

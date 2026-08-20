@@ -1,9 +1,6 @@
 <resources>
     <string name="app_name">EarthStep</string>
-    <string name="home_title">EarthStep</string>
-    <string name="home_tagline">歩いて地球を一周する</string>
     <string name="home_total_distance_label">累計距離</string>
-    <string name="home_xp_label">経験値</string>
     <string name="home_today_distance_label">今日の距離</string>
     <string name="home_lap_label">%1$d 周目</string>
     <string name="home_next_milestone_label">次は「%1$s」まで %2$s</string>
@@ -42,4 +39,68 @@
     <string name="home_permission_missing_notification">通知が許可されていないため、達成のお知らせが届きません</string>
     <string name="home_permission_battery_optimization">バッテリー最適化の対象のため、計測が止まることがあります</string>
     <string name="home_permission_open_settings">設定を開く</string>
+
+    <!-- ナビゲーション (P5-15) -->
+    <string name="nav_home">ホーム</string>
+    <string name="nav_map">マップ</string>
+    <string name="nav_collection">達成記録</string>
+    <string name="nav_settings">設定</string>
+
+    <!-- ホーム (P5-3) -->
+    <string name="home_milestone_count">達成 %1$d / %2$d</string>
+    <string name="home_measuring">計測中</string>
+    <string name="home_not_measuring">計測は停止しています</string>
+
+    <!-- マップ (P5-4) -->
+    <string name="map_next_marker">次の節目 %1$d%% まで %2$s</string>
+
+    <!-- 達成記録 (P5-6) -->
+    <string name="collection_progress">達成 %1$d / %2$d</string>
+    <string name="collection_achieved_at">到達 %1$s</string>
+    <string name="collection_not_achieved">未到達</string>
+
+    <!-- 達成演出 (P5-7 / P5-9 / P5-10 / P5-11) -->
+    <string name="celebration_milestone_title">「%1$s」に到達</string>
+    <string name="celebration_marker_title">今の周の %1$s を通過</string>
+    <string name="celebration_lap_title">%1$s 周目を走破</string>
+    <string name="celebration_lap_description">地球を一周しました。次の周がはじまります。</string>
+    <string name="celebration_marker_quarter_description">赤道から北極点までの距離に相当します。メートルはもともと、この距離の1000万分の1として定められました。</string>
+    <string name="celebration_marker_half_description">地球のちょうど裏側、対蹠地に到達しました。</string>
+    <string name="celebration_total_distance">ここまで %1$s</string>
+    <string name="celebration_next_distance">次は「%1$s」まで %2$s</string>
+    <string name="celebration_dismiss">つづける</string>
+    <string name="celebration_remaining">ほかに %1$d 件</string>
+    <string name="celebration_skip_all">まとめて閉じる</string>
+
+    <!-- 達成通知 (P5-12) -->
+    <string name="notification_channel_achievement_name">達成のお知らせ</string>
+    <string name="notification_channel_achievement_description">マイルストーンに到達したときに通知します</string>
+    <string name="notification_achievement_single">🎉 %1$s に到達</string>
+    <string name="notification_achievement_multiple">🎉 まとめて %1$d 個達成</string>
+    <string name="notification_achievement_lap">%1$d 周目の走破</string>
+    <string name="notification_achievement_marker">%2$d 周目の %1$s 地点</string>
+
+    <!-- 設定 (P5-14) -->
+    <string name="settings_measurement_title">計測</string>
+    <string name="settings_measurement_enabled">歩いた距離を数える</string>
+    <string name="settings_measurement_note">オフにすると常駐通知も消えます。次にアプリを開いたときに再開できます。</string>
+    <string name="settings_permission_title">権限の状態</string>
+    <string name="settings_permission_location">位置情報</string>
+    <string name="settings_permission_background_location">位置情報(常に許可)</string>
+    <string name="settings_permission_activity">活動検知</string>
+    <string name="settings_permission_notification">通知</string>
+    <string name="settings_permission_battery">バッテリー最適化の対象外</string>
+    <string name="settings_permission_battery_action">バッテリー設定</string>
+    <string name="settings_permission_granted">許可</string>
+    <string name="settings_permission_denied">未許可</string>
+    <string name="settings_stride_title">歩幅</string>
+    <string name="settings_stride_value">%1$.1f cm</string>
+    <string name="settings_stride_note">GPSで測れた区間から自動で調整しています。屋内など位置情報が使えない場所では、この歩幅で距離を推定します。</string>
+    <string name="settings_reset_title">リセット</string>
+    <string name="settings_reset_note">現在の記録は %1$s です。消すと元に戻せません。</string>
+    <string name="settings_reset_action">記録を消す</string>
+    <string name="settings_reset_cancel">やめる</string>
+    <string name="settings_reset_confirm_title">記録を消しますか</string>
+    <string name="settings_reset_confirm_body">距離・達成記録・周回がすべて消えます。この操作は元に戻せません。</string>
+    <string name="settings_backup_pending">エクスポート／インポートとクラウド同期は未実装です。</string>
 </resources>
