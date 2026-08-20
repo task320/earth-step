@@ -6,7 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.task320.earthstep.core.common.AppBuildInfo
 import io.github.task320.earthstep.core.data.measurement.MeasurementEngine
 import io.github.task320.earthstep.core.domain.permission.PermissionChecker
-import io.github.task320.earthstep.core.domain.repository.ProgressRepository
+import io.github.task320.earthstep.core.domain.usecase.ObserveProgressSummaryUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.stateIn
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     appBuildInfo: AppBuildInfo,
-    progressRepository: ProgressRepository,
+    observeProgressSummary: ObserveProgressSummaryUseCase,
     measurementEngine: MeasurementEngine,
     private val permissionChecker: PermissionChecker,
 ) : ViewModel() {
@@ -25,15 +25,12 @@ class HomeViewModel @Inject constructor(
     private val permissionState = MutableStateFlow(permissionChecker.currentState())
 
     val uiState: StateFlow<HomeUiState> = combine(
-        progressRepository.lifetimeStats,
-        progressRepository.todayDistanceMeters,
+        observeProgressSummary(),
         measurementEngine.status,
         permissionState,
-    ) { stats, todayMeters, status, permissions ->
+    ) { progress, status, permissions ->
         HomeUiState(
-            totalDistanceMeters = stats.totalDistanceMeters,
-            todayDistanceMeters = todayMeters,
-            currentLap = stats.currentLap,
+            progress = progress,
             measuring = status.running,
             permissionState = permissions,
             versionName = appBuildInfo.versionName,

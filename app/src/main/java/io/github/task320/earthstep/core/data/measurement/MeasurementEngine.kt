@@ -14,6 +14,7 @@ import io.github.task320.earthstep.core.domain.measurement.source.LocationDataSo
 import io.github.task320.earthstep.core.domain.measurement.source.StepDataSource
 import io.github.task320.earthstep.core.domain.repository.MeasurementStateRepository
 import io.github.task320.earthstep.core.domain.repository.ProgressRepository
+import io.github.task320.earthstep.core.domain.usecase.RecordDistanceUseCase
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -38,7 +39,7 @@ import timber.log.Timber
  * 計測エンジン(P2-21)。
  *
  * 位置・歩数・活動判定の3つの購読を1本の入力列へ束ね、[MeasurementProcessor] へ流し、
- * 確定した距離を [ProgressRepository] へ書く。判定ロジックは持たず、
+ * 確定した距離を [RecordDistanceUseCase] へ渡す。判定ロジックは持たず、
  * 「購読する」「永続化する」「日次上限をかける」だけを担当する。
  *
  * 常駐の仕組み(Foreground Service)は P3-1 で被せる。ここでは [run] が
@@ -50,6 +51,7 @@ class MeasurementEngine @Inject constructor(
     private val stepDataSource: StepDataSource,
     private val activityRecognitionDataSource: ActivityRecognitionDataSource,
     private val progressRepository: ProgressRepository,
+    private val recordDistance: RecordDistanceUseCase,
     private val measurementStateRepository: MeasurementStateRepository,
     private val timeSource: AppTimeSource,
     private val config: MeasurementConfig,
@@ -160,7 +162,8 @@ class MeasurementEngine @Inject constructor(
         val at = Instant.ofEpochMilli(timestampMillis)
         val allowed = dailyCap.allow(timeSource.dateOf(at), meters)
         if (allowed > 0L) {
-            progressRepository.addDistance(allowed, at)
+            // 距離の加算とマイルストーン判定は必ずこの経路を通す(P4-2)。
+            recordDistance(allowed, at)
         }
         if (dailyCap.lastDiscardedMeters > 0L) {
             // 仕様1.5: 上限超過は落とすだけでなく記録に残す。

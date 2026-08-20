@@ -1,6 +1,7 @@
 package io.github.task320.earthstep.core.domain.milestone
 
 import com.google.common.truth.Truth.assertThat
+import io.github.task320.earthstep.core.domain.progress.Earth
 import org.junit.Test
 
 /** P1-5: マスタの不変条件を検証する。 */
@@ -29,7 +30,7 @@ class MilestoneCatalogTest {
         val last = milestones.last()
         assertThat(last.index).isEqualTo(MilestoneCatalog.SIZE)
         assertThat(last.distanceMeters).isEqualTo(40_075_000L)
-        assertThat(last.distanceMeters).isEqualTo(MilestoneCatalog.EARTH_CIRCUMFERENCE_METERS)
+        assertThat(last.distanceMeters).isEqualTo(Earth.CIRCUMFERENCE_METERS)
     }
 
     @Test
@@ -65,7 +66,7 @@ class MilestoneCatalogTest {
         assertThat(MilestoneCatalog.achievedCount(299L)).isEqualTo(0)
         assertThat(MilestoneCatalog.achievedCount(300L)).isEqualTo(1)
         assertThat(MilestoneCatalog.achievedCount(333L)).isEqualTo(2)
-        assertThat(MilestoneCatalog.achievedCount(MilestoneCatalog.EARTH_CIRCUMFERENCE_METERS))
+        assertThat(MilestoneCatalog.achievedCount(Earth.CIRCUMFERENCE_METERS))
             .isEqualTo(MilestoneCatalog.SIZE)
     }
 
@@ -73,6 +74,6 @@ class MilestoneCatalogTest {
     fun `nextAfter は次の未達成を返し全達成後はnullになる`() {
         assertThat(MilestoneCatalog.nextAfter(0L)?.index).isEqualTo(1)
         assertThat(MilestoneCatalog.nextAfter(300L)?.index).isEqualTo(2)
-        assertThat(MilestoneCatalog.nextAfter(MilestoneCatalog.EARTH_CIRCUMFERENCE_METERS)).isNull()
+        assertThat(MilestoneCatalog.nextAfter(Earth.CIRCUMFERENCE_METERS)).isNull()
     }
 }

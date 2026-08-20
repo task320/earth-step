@@ -1,15 +1,14 @@
 package io.github.task320.earthstep.feature.home
 
 import io.github.task320.earthstep.core.domain.permission.PermissionState
+import io.github.task320.earthstep.core.domain.progress.ProgressSummary
 
 /**
  * ホーム画面の状態。
- * 次のマイルストーンまでの距離と進捗率は P4-4 で追加する。
+ * 見た目の作り込み(ドット絵化・進捗バー)は P5-3 で行う。
  */
 data class HomeUiState(
-    val totalDistanceMeters: Long = 0L,
-    val todayDistanceMeters: Long = 0L,
-    val currentLap: Int = 1,
+    val progress: ProgressSummary = ProgressSummary(),
     val measuring: Boolean = false,
     val permissionState: PermissionState = PermissionState(),
     val versionName: String = "",

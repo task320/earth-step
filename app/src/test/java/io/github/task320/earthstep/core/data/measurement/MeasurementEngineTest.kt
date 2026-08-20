@@ -6,9 +6,11 @@ import io.github.task320.earthstep.core.domain.measurement.model.ActivityUpdate
 import io.github.task320.earthstep.core.domain.measurement.model.LocationSample
 import io.github.task320.earthstep.core.domain.measurement.model.StepSample
 import io.github.task320.earthstep.core.domain.measurement.model.UserActivity
+import io.github.task320.earthstep.core.domain.usecase.RecordDistanceUseCase
 import io.github.task320.earthstep.testing.FakeActivityRecognitionDataSource
 import io.github.task320.earthstep.testing.FakeLocationDataSource
 import io.github.task320.earthstep.testing.FakeMeasurementStateRepository
+import io.github.task320.earthstep.testing.FakeMilestoneRepository
 import io.github.task320.earthstep.testing.FakeProgressRepository
 import io.github.task320.earthstep.testing.FakeStepDataSource
 import io.github.task320.earthstep.testing.FakeTimeSource
@@ -30,6 +32,7 @@ class MeasurementEngineTest {
     private val activityDataSource = FakeActivityRecognitionDataSource()
     private val progressRepository = FakeProgressRepository()
     private val measurementStateRepository = FakeMeasurementStateRepository()
+    private val milestoneRepository = FakeMilestoneRepository()
     private val timeSource = FakeTimeSource()
 
     @Test
@@ -167,6 +170,7 @@ class MeasurementEngineTest {
         stepDataSource = stepDataSource,
         activityRecognitionDataSource = activityDataSource,
         progressRepository = progressRepository,
+        recordDistance = RecordDistanceUseCase(progressRepository, milestoneRepository),
         measurementStateRepository = measurementStateRepository,
         timeSource = timeSource,
         config = MeasurementConfig(),

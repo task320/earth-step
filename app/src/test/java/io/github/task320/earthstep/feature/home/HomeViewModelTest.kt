@@ -8,10 +8,14 @@ import io.github.task320.earthstep.core.domain.model.LifetimeStats
 import io.github.task320.earthstep.core.domain.permission.AppPermission
 import io.github.task320.earthstep.core.domain.permission.PermissionRequirements
 import io.github.task320.earthstep.core.domain.permission.PermissionState
+import io.github.task320.earthstep.core.domain.progress.Earth
+import io.github.task320.earthstep.core.domain.usecase.ObserveProgressSummaryUseCase
+import io.github.task320.earthstep.core.domain.usecase.RecordDistanceUseCase
 import io.github.task320.earthstep.testing.FakeActivityRecognitionDataSource
 import io.github.task320.earthstep.testing.FakeAppBuildInfo
 import io.github.task320.earthstep.testing.FakeLocationDataSource
 import io.github.task320.earthstep.testing.FakeMeasurementStateRepository
+import io.github.task320.earthstep.testing.FakeMilestoneRepository
 import io.github.task320.earthstep.testing.FakePermissionChecker
 import io.github.task320.earthstep.testing.FakeProgressRepository
 import io.github.task320.earthstep.testing.FakeStepDataSource
@@ -51,9 +55,9 @@ class HomeViewModelTest {
         viewModel.uiState.test {
             val state = awaitItem()
             assertThat(state.versionName).isEqualTo("1.2.3")
-            assertThat(state.totalDistanceMeters).isEqualTo(0L)
-            assertThat(state.todayDistanceMeters).isEqualTo(0L)
-            assertThat(state.currentLap).isEqualTo(1)
+            assertThat(state.progress.totalDistanceMeters).isEqualTo(0L)
+            assertThat(state.progress.todayDistanceMeters).isEqualTo(0L)
+            assertThat(state.progress.lapProgress.lapNumber).isEqualTo(1)
             assertThat(state.measuring).isFalse()
             cancelAndIgnoreRemainingEvents()
         }
@@ -69,18 +73,22 @@ class HomeViewModelTest {
             progressRepository.addDistance(1_500L, Instant.parse("2026-08-19T03:00:00Z"))
 
             val state = expectMostRecentItem()
-            assertThat(state.totalDistanceMeters).isEqualTo(1_500L)
-            assertThat(state.todayDistanceMeters).isEqualTo(1_500L)
+            assertThat(state.progress.totalDistanceMeters).isEqualTo(1_500L)
+            assertThat(state.progress.todayDistanceMeters).isEqualTo(1_500L)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `周回数が状態に反映される`() = runTest {
-        val viewModel = viewModel(LifetimeStats.INITIAL.copy(currentLap = 4))
+    fun `周回数は累計距離から導かれる`() = runTest {
+        // 周回数はDBの current_lap ではなく累計距離から計算する(P4-4)。
+        val stats = LifetimeStats.INITIAL.copy(totalDistanceMeters = Earth.CIRCUMFERENCE_METERS + 1_000L)
+        val viewModel = viewModel(stats)
 
         viewModel.uiState.test {
-            assertThat(expectMostRecentItem().currentLap).isEqualTo(4)
+            val progress = expectMostRecentItem().progress
+            assertThat(progress.lapProgress.lapNumber).isEqualTo(2)
+            assertThat(progress.showsMilestoneList).isFalse()
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -126,7 +134,7 @@ class HomeViewModelTest {
         val repository = stats?.let { FakeProgressRepository(it) } ?: progressRepository
         return HomeViewModel(
             appBuildInfo = FakeAppBuildInfo(versionName = "1.2.3"),
-            progressRepository = repository,
+            observeProgressSummary = ObserveProgressSummaryUseCase(repository),
             measurementEngine = engine(repository),
             permissionChecker = permissionChecker,
         )
@@ -138,6 +146,7 @@ class HomeViewModelTest {
         stepDataSource = FakeStepDataSource(),
         activityRecognitionDataSource = FakeActivityRecognitionDataSource(),
         progressRepository = repository,
+        recordDistance = RecordDistanceUseCase(repository, FakeMilestoneRepository()),
         measurementStateRepository = FakeMeasurementStateRepository(),
         timeSource = FakeTimeSource(),
         config = MeasurementConfig(),

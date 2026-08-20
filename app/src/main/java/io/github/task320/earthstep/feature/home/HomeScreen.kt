@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -26,6 +27,8 @@ import io.github.task320.earthstep.core.common.format.DistanceFormatter
 import io.github.task320.earthstep.core.designsystem.theme.EarthStepTheme
 import io.github.task320.earthstep.core.domain.permission.AppPermission
 import io.github.task320.earthstep.core.domain.permission.PermissionState
+import io.github.task320.earthstep.core.domain.progress.Earth
+import io.github.task320.earthstep.core.domain.progress.ProgressSummary
 import io.github.task320.earthstep.feature.permission.PermissionIntents
 import io.github.task320.earthstep.ui.OnLifecycleResume
 
@@ -70,25 +73,29 @@ fun HomeScreen(uiState: HomeUiState, onOpenSettings: () -> Unit, modifier: Modif
                 text = stringResource(R.string.home_tagline),
                 style = MaterialTheme.typography.bodyMedium,
             )
+            val progress = uiState.progress
             Text(
                 text = stringResource(R.string.home_total_distance_label) + ": " +
-                    DistanceFormatter.formatDistance(uiState.totalDistanceMeters),
+                    DistanceFormatter.formatDistance(progress.totalDistanceMeters),
                 style = MaterialTheme.typography.titleLarge,
             )
             Text(
                 text = stringResource(R.string.home_xp_label) + ": " +
-                    DistanceFormatter.formatXp(uiState.totalDistanceMeters),
+                    DistanceFormatter.formatXp(progress.xp),
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
                 text = stringResource(R.string.home_today_distance_label) + ": " +
-                    DistanceFormatter.formatDistance(uiState.todayDistanceMeters),
+                    DistanceFormatter.formatDistance(progress.todayDistanceMeters),
                 style = MaterialTheme.typography.titleMedium,
             )
-            Text(
-                text = stringResource(R.string.home_lap_label, uiState.currentLap),
-                style = MaterialTheme.typography.bodyMedium,
-            )
+
+            // 2周目以降はマイルストーンを再提示せず、周回の進捗だけを見せる(仕様4.1 / P4-7)。
+            if (progress.showsMilestoneList) {
+                NextMilestone(progress = progress)
+            } else {
+                LapProgressText(progress = progress)
+            }
 
             PermissionWarnings(
                 permissionState = uiState.permissionState,
@@ -100,6 +107,61 @@ fun HomeScreen(uiState: HomeUiState, onOpenSettings: () -> Unit, modifier: Modif
                 style = MaterialTheme.typography.labelSmall,
             )
         }
+    }
+}
+
+/** 次のマイルストーンまでの残り(P4-4)。 */
+@Composable
+private fun NextMilestone(progress: ProgressSummary, modifier: Modifier = Modifier) {
+    val next = progress.nextMilestone
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = if (next == null) {
+                stringResource(R.string.home_all_milestones_achieved)
+            } else {
+                stringResource(
+                    R.string.home_next_milestone_label,
+                    next.name,
+                    DistanceFormatter.formatDistance(progress.remainingToNextMilestoneMeters),
+                )
+            },
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        LinearProgressIndicator(
+            progress = { progress.milestoneRatio },
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+/** 周回カウンターと周内の進捗(仕様4.1 / P4-7)。 */
+@Composable
+private fun LapProgressText(progress: ProgressSummary, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = stringResource(R.string.home_lap_label, progress.lapProgress.lapNumber),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        Text(
+            text = stringResource(
+                R.string.home_lap_progress_label,
+                DistanceFormatter.formatDistance(progress.lapProgress.distanceInLapMeters),
+                DistanceFormatter.formatDistance(Earth.CIRCUMFERENCE_METERS),
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        LinearProgressIndicator(
+            progress = { progress.lapProgress.ratio },
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
@@ -147,9 +209,7 @@ private fun HomeScreenPreview() {
     EarthStepTheme {
         HomeScreen(
             uiState = HomeUiState(
-                totalDistanceMeters = 12_345L,
-                todayDistanceMeters = 2_460L,
-                currentLap = 1,
+                progress = ProgressSummary.of(totalDistanceMeters = 12_345L, todayDistanceMeters = 2_460L),
                 permissionState = PermissionState(
                     granted = setOf(AppPermission.FINE_LOCATION),
                     required = setOf(AppPermission.FINE_LOCATION, AppPermission.BACKGROUND_LOCATION),

@@ -1,5 +1,7 @@
 package io.github.task320.earthstep.core.domain.milestone
 
+import io.github.task320.earthstep.core.domain.progress.Earth
+
 /**
  * 仕様3.2の100マイルストーンの静的マスタ(P1-4)。
  *
@@ -14,9 +16,6 @@ package io.github.task320.earthstep.core.domain.milestone
 // 実在物の距離そのものが値であり、定数へ切り出しても意味を持たないためマジックナンバー検査を外す。
 @Suppress("MagicNumber")
 object MilestoneCatalog {
-
-    /** 地球一周の距離(m)。#100 の距離であり、1周あたりの距離でもある。 */
-    const val EARTH_CIRCUMFERENCE_METERS = 40_075_000L
 
     /** マイルストーンの総数。 */
     const val SIZE = 100
@@ -123,7 +122,7 @@ object MilestoneCatalog {
         Milestone(99, 35_786_000L, "静止衛星の軌道高度"),
         Milestone(
             index = 100,
-            distanceMeters = EARTH_CIRCUMFERENCE_METERS,
+            distanceMeters = Earth.CIRCUMFERENCE_METERS,
             name = "地球一周達成 🏁",
             isMajor = true,
         ),
