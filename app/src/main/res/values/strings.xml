@@ -102,5 +102,14 @@
     <string name="settings_reset_cancel">やめる</string>
     <string name="settings_reset_confirm_title">記録を消しますか</string>
     <string name="settings_reset_confirm_body">距離・達成記録・周回がすべて消えます。この操作は元に戻せません。</string>
-    <string name="settings_backup_pending">エクスポート／インポートとクラウド同期は未実装です。</string>
+    <string name="settings_backup_title">バックアップ</string>
+    <string name="settings_backup_note">記録をJSONファイルへ書き出せます。読み込むときは、いまの記録と突き合わせて統合します(同じ日の距離は多い方を採ります)。</string>
+    <string name="settings_backup_export">書き出す</string>
+    <string name="settings_backup_import">読み込む</string>
+    <string name="settings_backup_exported">書き出しました。</string>
+    <string name="settings_backup_export_failed">書き出せませんでした。</string>
+    <string name="settings_backup_imported">読み込みました。累計が %1$s 増えました。</string>
+    <string name="settings_backup_import_failed">読み込めませんでした。ファイルの形式を確認してください。</string>
+    <string name="settings_backup_import_unsupported">このファイルは新しい形式(バージョン %1$d)です。アプリを更新してください。</string>
+    <string name="settings_sync_pending">クラウド同期は未実装です。</string>
 </resources>

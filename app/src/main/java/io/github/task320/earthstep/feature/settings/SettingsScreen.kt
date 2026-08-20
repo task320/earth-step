@@ -1,5 +1,8 @@
 package io.github.task320.earthstep.feature.settings
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,32 +44,59 @@ import io.github.task320.earthstep.ui.OnLifecycleResume
 /**
  * 設定(P5-14)。
  *
- * 権限の状態・バッテリー最適化・歩幅の較正値・リセットを扱う。
- * エクスポート/インポートと同期は P7 で追加する。
+ * 権限の状態・バッテリー最適化・歩幅の較正値・エクスポート/インポート・リセットを扱う。
+ * クラウド同期(P7-6〜P7-9)は未実装。
  */
 @Composable
 fun SettingsRoute(modifier: Modifier = Modifier, viewModel: SettingsViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val backupMessage by viewModel.backupMessage.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     OnLifecycleResume { viewModel.refreshPermissions() }
 
+    // SAF で保存先/読み込み元を選ばせる。アプリの領域外に置くので、
+    // アンインストールしてもバックアップは残る(P7-2 / P7-3)。
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument(BACKUP_MIME_TYPE),
+    ) { uri: Uri? -> uri?.let(viewModel::export) }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri: Uri? -> uri?.let(viewModel::import) }
+
     SettingsScreen(
         uiState = uiState,
+        backupMessage = backupMessage,
         onMeasurementEnabledChange = viewModel::setMeasurementEnabled,
         onOpenAppSettings = { PermissionIntents.openAppSettings(context) },
         onOpenBatterySettings = { PermissionIntents.requestIgnoreBatteryOptimizations(context) },
+        onExport = {
+            viewModel.clearBackupMessage()
+            exportLauncher.launch(viewModel.suggestedFileName())
+        },
+        onImport = {
+            viewModel.clearBackupMessage()
+            // 端末によっては JSON の MIME で絞ると選べないため、任意のファイルも許す。
+            importLauncher.launch(arrayOf(BACKUP_MIME_TYPE, ANY_MIME_TYPE))
+        },
         onReset = viewModel::reset,
         modifier = modifier,
     )
 }
 
+private const val BACKUP_MIME_TYPE = "application/json"
+private const val ANY_MIME_TYPE = "*" + "/" + "*"
+
 @Composable
 fun SettingsScreen(
     uiState: SettingsUiState,
+    backupMessage: BackupMessage?,
     onMeasurementEnabledChange: (Boolean) -> Unit,
     onOpenAppSettings: () -> Unit,
     onOpenBatterySettings: () -> Unit,
+    onExport: () -> Unit,
+    onImport: () -> Unit,
     onReset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -128,6 +158,12 @@ fun SettingsScreen(
                 )
             }
 
+            BackupPanel(
+                backupMessage = backupMessage,
+                onExport = onExport,
+                onImport = onImport,
+            )
+
             PixelPanel(borderColor = PixelPalette.Rose) {
                 Text(
                     text = stringResource(R.string.settings_reset_title),
@@ -147,12 +183,6 @@ fun SettingsScreen(
                     onClick = { confirmingReset = true },
                 )
             }
-
-            Text(
-                text = stringResource(R.string.settings_backup_pending),
-                style = MaterialTheme.typography.labelSmall,
-                color = PixelPalette.Mist,
-            )
         }
     }
 
@@ -166,6 +196,67 @@ fun SettingsScreen(
         )
     }
 }
+
+/** エクスポート/インポート(P7-2 / P7-3)。 */
+@Composable
+private fun BackupPanel(
+    backupMessage: BackupMessage?,
+    onExport: () -> Unit,
+    onImport: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    PixelPanel(modifier = modifier) {
+        Text(
+            text = stringResource(R.string.settings_backup_title),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Text(
+            text = stringResource(R.string.settings_backup_note),
+            style = MaterialTheme.typography.labelSmall,
+            color = PixelPalette.Mist,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(PixelDimens.SpaceSmall),
+        ) {
+            PixelTextButton(text = stringResource(R.string.settings_backup_export), onClick = onExport)
+            PixelTextButton(text = stringResource(R.string.settings_backup_import), onClick = onImport)
+        }
+        backupMessage?.let { message ->
+            Text(
+                text = message.text(),
+                style = MaterialTheme.typography.bodySmall,
+                color = if (message.isFailure()) PixelPalette.Rose else PixelPalette.Green,
+            )
+        }
+        Text(
+            text = stringResource(R.string.settings_sync_pending),
+            style = MaterialTheme.typography.labelSmall,
+            color = PixelPalette.Mist,
+        )
+    }
+}
+
+@Composable
+private fun BackupMessage.text(): String = when (this) {
+    BackupMessage.Exported -> stringResource(R.string.settings_backup_exported)
+    BackupMessage.ExportFailed -> stringResource(R.string.settings_backup_export_failed)
+    is BackupMessage.Imported -> stringResource(
+        R.string.settings_backup_imported,
+        DistanceFormatter.formatDistance(addedMeters),
+    )
+
+    is BackupMessage.ImportUnsupportedVersion -> stringResource(
+        R.string.settings_backup_import_unsupported,
+        version,
+    )
+
+    BackupMessage.ImportFailed -> stringResource(R.string.settings_backup_import_failed)
+}
+
+private fun BackupMessage.isFailure(): Boolean = this is BackupMessage.ExportFailed ||
+    this is BackupMessage.ImportFailed ||
+    this is BackupMessage.ImportUnsupportedVersion
 
 @Composable
 private fun PermissionPanel(
@@ -254,9 +345,12 @@ private fun SettingsScreenPreview() {
     EarthStepTheme {
         SettingsScreen(
             uiState = SettingsUiState(strideLengthCm = 71.4, totalDistanceMeters = 123_456L),
+            backupMessage = BackupMessage.Imported(addedMeters = 5_400L),
             onMeasurementEnabledChange = {},
             onOpenAppSettings = {},
             onOpenBatterySettings = {},
+            onExport = {},
+            onImport = {},
             onReset = {},
         )
     }
