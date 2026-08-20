@@ -154,6 +154,10 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.room.testing)
     testImplementation(libs.androidx.test.ext.junit)
+    // Compose の UI テストは Robolectric 上で動かし、CI でも実行できるようにする(P8-7)。
+    testImplementation(libs.compose.ui.test.junit4)
+    testImplementation(platform(libs.compose.bom))
+    debugImplementation(libs.compose.ui.test.manifest)
 
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.androidx.test.ext.junit)
@@ -162,5 +166,4 @@ dependencies {
     androidTestImplementation(libs.compose.ui.test.junit4)
     androidTestImplementation(libs.truth)
     androidTestImplementation(libs.room.testing)
-    debugImplementation(libs.compose.ui.test.manifest)
 }

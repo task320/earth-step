@@ -29,6 +29,7 @@ import io.github.task320.earthstep.core.designsystem.component.PixelTextButton
 import io.github.task320.earthstep.core.designsystem.theme.EarthStepTheme
 import io.github.task320.earthstep.core.designsystem.theme.PixelDimens
 import io.github.task320.earthstep.core.designsystem.theme.PixelPalette
+import io.github.task320.earthstep.core.domain.milestone.Milestone
 import io.github.task320.earthstep.core.domain.permission.AppPermission
 import io.github.task320.earthstep.core.domain.permission.PermissionState
 import io.github.task320.earthstep.core.domain.progress.Earth
@@ -76,8 +77,11 @@ fun HomeScreen(uiState: HomeUiState, onOpenSettings: () -> Unit, modifier: Modif
             WorldMapView(lapRatio = progress.lapProgress.ratio, lapSkin = progress.lapSkin)
 
             // 2周目以降はマイルストーンを再提示せず、周回の進捗だけを見せる(仕様4.1 / P4-7)。
-            if (progress.showsMilestoneList) {
-                NextMilestonePanel(progress = progress)
+            // 100個目に到達した時点で1周を走破しているため、
+            // 「一覧を出すが次の目標が無い」状態は起こらない。
+            val next = progress.nextMilestone
+            if (progress.showsMilestoneList && next != null) {
+                NextMilestonePanel(progress = progress, next = next)
             } else {
                 LapProgressPanel(progress = progress)
             }
@@ -143,19 +147,14 @@ private fun TotalDistancePanel(progress: ProgressSummary, measuring: Boolean, mo
 
 /** 次のマイルストーンまでの残りと進捗バー(P4-4 / P5-3)。 */
 @Composable
-private fun NextMilestonePanel(progress: ProgressSummary, modifier: Modifier = Modifier) {
-    val next = progress.nextMilestone
+private fun NextMilestonePanel(progress: ProgressSummary, next: Milestone, modifier: Modifier = Modifier) {
     PixelPanel(modifier = modifier) {
         Text(
-            text = if (next == null) {
-                stringResource(R.string.home_all_milestones_achieved)
-            } else {
-                stringResource(
-                    R.string.home_next_milestone_label,
-                    next.name,
-                    DistanceFormatter.formatDistance(progress.remainingToNextMilestoneMeters),
-                )
-            },
+            text = stringResource(
+                R.string.home_next_milestone_label,
+                next.name,
+                DistanceFormatter.formatDistance(progress.remainingToNextMilestoneMeters),
+            ),
             style = MaterialTheme.typography.bodyMedium,
         )
         PixelProgressBar(progress = progress.milestoneRatio)

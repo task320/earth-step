@@ -327,7 +327,7 @@ private fun ResetConfirmDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
         text = { Text(text = stringResource(R.string.settings_reset_confirm_body)) },
         confirmButton = {
             PixelButton(
-                text = stringResource(R.string.settings_reset_action),
+                text = stringResource(R.string.settings_reset_confirm_action),
                 onClick = onConfirm,
                 containerColor = PixelPalette.Rose,
             )

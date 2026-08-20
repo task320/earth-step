@@ -99,6 +99,7 @@
     <string name="settings_reset_title">リセット</string>
     <string name="settings_reset_note">現在の記録は %1$s です。消すと元に戻せません。</string>
     <string name="settings_reset_action">記録を消す</string>
+    <string name="settings_reset_confirm_action">消す</string>
     <string name="settings_reset_cancel">やめる</string>
     <string name="settings_reset_confirm_title">記録を消しますか</string>
     <string name="settings_reset_confirm_body">距離・達成記録・周回がすべて消えます。この操作は元に戻せません。</string>
