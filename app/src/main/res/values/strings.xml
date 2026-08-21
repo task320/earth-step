@@ -112,5 +112,18 @@
     <string name="settings_backup_imported">読み込みました。累計が %1$s 増えました。</string>
     <string name="settings_backup_import_failed">読み込めませんでした。ファイルの形式を確認してください。</string>
     <string name="settings_backup_import_unsupported">このファイルは新しい形式(バージョン %1$d)です。アプリを更新してください。</string>
-    <string name="settings_sync_pending">クラウド同期は未実装です。</string>
+    <string name="settings_cloud_sync_title">クラウド同期</string>
+    <string name="settings_cloud_sync_note">サインインすると機種変更時の復元に使えます。1日に1回、自動でも同期します。</string>
+    <string name="settings_cloud_sync_signin">Googleでサインイン</string>
+    <string name="settings_cloud_sync_signin_failed">サインインできませんでした。</string>
+    <string name="settings_cloud_sync_signed_in_as">サインイン中: %1$s</string>
+    <string name="settings_cloud_sync_signout">サインアウト</string>
+    <string name="settings_cloud_sync_action">今すぐ同期</string>
+    <string name="settings_cloud_sync_synced">同期しました。累計が %1$s 増えました。</string>
+    <string name="settings_cloud_sync_failed">同期できませんでした。通信状況を確認してください。</string>
+    <string name="settings_cloud_sync_last_synced_at">最終同期: %1$s</string>
+    <string name="settings_cloud_sync_never_synced">まだ同期していません</string>
+
+    <!-- P7-6: OAuthのWebクライアントID。クライアントシークレットを持たない公開情報のため直接埋め込む。 -->
+    <string name="google_web_client_id" translatable="false">187521459382-paq83dipmq5kc3p63lht94ocm7i3t1s9.apps.googleusercontent.com</string>
 </resources>

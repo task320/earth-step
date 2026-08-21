@@ -23,4 +23,7 @@ object PixelDimens {
 
     /** 進捗バーの高さ。 */
     val ProgressHeight = Unit * 4
+
+    /** 下部タブのアイコンサイズ。Material既定(24dp)の1.5倍(P8フィードバック対応)。 */
+    val TabIconSize = Unit * 9
 }

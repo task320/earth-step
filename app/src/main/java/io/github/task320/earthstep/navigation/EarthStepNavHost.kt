@@ -3,7 +3,8 @@ package io.github.task320.earthstep.navigation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -19,6 +20,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import io.github.task320.earthstep.core.designsystem.component.PixelImage
+import io.github.task320.earthstep.core.designsystem.theme.PixelDimens
 import io.github.task320.earthstep.core.designsystem.theme.PixelPalette
 import io.github.task320.earthstep.feature.celebration.CelebrationOverlay
 import io.github.task320.earthstep.feature.collection.CollectionRoute
@@ -98,9 +101,11 @@ private fun EarthStepBottomBar(
                 selected = currentRoute == destination.route,
                 onClick = { onSelect(destination) },
                 icon = {
-                    Icon(
-                        imageVector = destination.icon(),
+                    PixelImage(
+                        resourceId = destination.iconRes(),
                         contentDescription = stringResource(destination.labelRes),
+                        modifier = Modifier.size(PixelDimens.TabIconSize),
+                        tint = LocalContentColor.current,
                     )
                 },
                 label = { Text(text = stringResource(destination.labelRes)) },

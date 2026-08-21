@@ -30,6 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.task320.earthstep.R
 import io.github.task320.earthstep.core.common.format.DistanceFormatter
+import io.github.task320.earthstep.core.common.sound.SoundEffects
 import io.github.task320.earthstep.core.designsystem.component.PixelButton
 import io.github.task320.earthstep.core.designsystem.component.PixelPanel
 import io.github.task320.earthstep.core.designsystem.component.PixelTextButton
@@ -77,7 +78,10 @@ fun CelebrationContentView(
 
     // 表示のたびに小さく飛び出す。ドット絵に合わせて弾みは控えめにする。
     var shown by remember(celebration) { mutableStateOf(false) }
-    LaunchedEffect(celebration) { shown = true }
+    LaunchedEffect(celebration) {
+        shown = true
+        SoundEffects.play(if (content.isMajor) SoundEffects.Sound.MAJOR else SoundEffects.Sound.MILESTONE)
+    }
     val scale by animateFloatAsState(
         targetValue = if (shown) 1f else INITIAL_SCALE,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
@@ -109,9 +113,9 @@ fun CelebrationContentView(
                 color = if (content.isMajor) PixelPalette.Gold else PixelPalette.Bone,
                 textAlign = TextAlign.Center,
             )
-            content.descriptionRes?.let { descriptionRes ->
+            (content.descriptionText ?: content.descriptionRes?.let { stringResource(it) })?.let { description ->
                 Text(
-                    text = stringResource(descriptionRes),
+                    text = description,
                     style = MaterialTheme.typography.bodySmall,
                     color = PixelPalette.Mist,
                     textAlign = TextAlign.Center,

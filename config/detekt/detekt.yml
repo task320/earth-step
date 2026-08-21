@@ -9,7 +9,7 @@ complexity:
     thresholdInClasses: 15
   LongParameterList:
     # DI で依存を受け取るクラスは引数が増える。まとめるための箱を作る方が読みにくい。
-    constructorThreshold: 9
+    constructorThreshold: 12
     # Composable は「状態 + コールバック + Modifier」で引数が増えるのが普通の形。
     ignoreAnnotated: ['Composable']
   LongMethod:

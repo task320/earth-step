@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +31,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.task320.earthstep.R
 import io.github.task320.earthstep.core.common.format.DistanceFormatter
+import io.github.task320.earthstep.core.data.auth.GoogleDriveAuthorization
 import io.github.task320.earthstep.core.designsystem.component.PixelButton
 import io.github.task320.earthstep.core.designsystem.component.PixelPanel
 import io.github.task320.earthstep.core.designsystem.component.PixelTextButton
@@ -40,20 +42,34 @@ import io.github.task320.earthstep.core.domain.permission.AppPermission
 import io.github.task320.earthstep.core.domain.permission.PermissionState
 import io.github.task320.earthstep.feature.permission.PermissionIntents
 import io.github.task320.earthstep.ui.OnLifecycleResume
+import kotlinx.coroutines.launch
 
 /**
  * 設定(P5-14)。
  *
- * 権限の状態・バッテリー最適化・歩幅の較正値・エクスポート/インポート・リセットを扱う。
- * クラウド同期(P7-6〜P7-9)は未実装。
+ * 権限の状態・バッテリー最適化・歩幅の較正値・エクスポート/インポート・リセット・
+ * Googleサインイン(P7-6)を扱う。自動バックアップ(P7-7〜P7-9)は未実装。
  */
 @Composable
 fun SettingsRoute(modifier: Modifier = Modifier, viewModel: SettingsViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val backupMessage by viewModel.backupMessage.collectAsStateWithLifecycle()
+    val driveSyncMessage by viewModel.driveSyncMessage.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var signInFailed by remember { mutableStateOf(false) }
 
     OnLifecycleResume { viewModel.refreshPermissions() }
+
+    // Drive appDataFolderへの認可(P7-7)。未許可のときだけ同意画面をここから起動する。
+    val authorizationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult(),
+    ) { result ->
+        when (val outcome = GoogleDriveAuthorization.resultFromIntent(context, result.data)) {
+            is GoogleDriveAuthorization.Outcome.Authorized -> viewModel.sync(outcome.accessToken)
+            else -> viewModel.onDriveAuthorizationFailed()
+        }
+    }
 
     // SAF で保存先/読み込み元を選ばせる。アプリの領域外に置くので、
     // アンインストールしてもバックアップは残る(P7-2 / P7-3)。
@@ -68,6 +84,8 @@ fun SettingsRoute(modifier: Modifier = Modifier, viewModel: SettingsViewModel = 
     SettingsScreen(
         uiState = uiState,
         backupMessage = backupMessage,
+        driveSyncMessage = driveSyncMessage,
+        signInFailed = signInFailed,
         onMeasurementEnabledChange = viewModel::setMeasurementEnabled,
         onOpenAppSettings = { PermissionIntents.openAppSettings(context) },
         onOpenBatterySettings = { PermissionIntents.requestIgnoreBatteryOptimizations(context) },
@@ -81,6 +99,31 @@ fun SettingsRoute(modifier: Modifier = Modifier, viewModel: SettingsViewModel = 
             importLauncher.launch(arrayOf(BACKUP_MIME_TYPE, ANY_MIME_TYPE))
         },
         onReset = viewModel::reset,
+        onSignIn = {
+            signInFailed = false
+            coroutineScope.launch {
+                val account = GoogleSignIn.signIn(context)
+                if (account != null) viewModel.onSignedIn(account) else signInFailed = true
+            }
+        },
+        onSignOut = {
+            coroutineScope.launch {
+                GoogleSignIn.signOut(context)
+                viewModel.signOut()
+            }
+        },
+        onSync = {
+            viewModel.clearDriveSyncMessage()
+            coroutineScope.launch {
+                when (val outcome = GoogleDriveAuthorization.authorize(context)) {
+                    is GoogleDriveAuthorization.Outcome.Authorized -> viewModel.sync(outcome.accessToken)
+                    is GoogleDriveAuthorization.Outcome.NeedsConsent ->
+                        authorizationLauncher.launch(outcome.request)
+
+                    GoogleDriveAuthorization.Outcome.Failed -> viewModel.onDriveAuthorizationFailed()
+                }
+            }
+        },
         modifier = modifier,
     )
 }
@@ -92,12 +135,17 @@ private const val ANY_MIME_TYPE = "*" + "/" + "*"
 fun SettingsScreen(
     uiState: SettingsUiState,
     backupMessage: BackupMessage?,
+    driveSyncMessage: DriveSyncMessage?,
+    signInFailed: Boolean,
     onMeasurementEnabledChange: (Boolean) -> Unit,
     onOpenAppSettings: () -> Unit,
     onOpenBatterySettings: () -> Unit,
     onExport: () -> Unit,
     onImport: () -> Unit,
     onReset: () -> Unit,
+    onSignIn: () -> Unit,
+    onSignOut: () -> Unit,
+    onSync: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var confirmingReset by remember { mutableStateOf(false) }
@@ -162,6 +210,16 @@ fun SettingsScreen(
                 backupMessage = backupMessage,
                 onExport = onExport,
                 onImport = onImport,
+            )
+
+            CloudSyncPanel(
+                signedInAccount = uiState.signedInAccount,
+                signInFailed = signInFailed,
+                driveSyncMessage = driveSyncMessage,
+                lastSyncedAt = uiState.lastSyncedAt,
+                onSignIn = onSignIn,
+                onSignOut = onSignOut,
+                onSync = onSync,
             )
 
             PixelPanel(borderColor = PixelPalette.Rose) {
@@ -229,11 +287,6 @@ private fun BackupPanel(
                 color = if (message.isFailure()) PixelPalette.Rose else PixelPalette.Green,
             )
         }
-        Text(
-            text = stringResource(R.string.settings_sync_pending),
-            style = MaterialTheme.typography.labelSmall,
-            color = PixelPalette.Mist,
-        )
     }
 }
 
@@ -346,12 +399,17 @@ private fun SettingsScreenPreview() {
         SettingsScreen(
             uiState = SettingsUiState(strideLengthCm = 71.4, totalDistanceMeters = 123_456L),
             backupMessage = BackupMessage.Imported(addedMeters = 5_400L),
+            driveSyncMessage = null,
+            signInFailed = false,
             onMeasurementEnabledChange = {},
             onOpenAppSettings = {},
             onOpenBatterySettings = {},
             onExport = {},
             onImport = {},
             onReset = {},
+            onSignIn = {},
+            onSignOut = {},
+            onSync = {},
         )
     }
 }

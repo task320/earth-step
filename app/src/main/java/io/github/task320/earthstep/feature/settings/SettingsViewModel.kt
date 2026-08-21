@@ -6,14 +6,20 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.task320.earthstep.core.common.time.AppTimeSource
 import io.github.task320.earthstep.core.data.backup.BackupFileStore
+import io.github.task320.earthstep.core.domain.model.GoogleAccount
 import io.github.task320.earthstep.core.domain.permission.PermissionChecker
 import io.github.task320.earthstep.core.domain.permission.PermissionState
+import io.github.task320.earthstep.core.domain.repository.DriveSyncStateRepository
+import io.github.task320.earthstep.core.domain.repository.GoogleAuthRepository
 import io.github.task320.earthstep.core.domain.repository.ProgressRepository
 import io.github.task320.earthstep.core.domain.repository.SettingsRepository
 import io.github.task320.earthstep.core.domain.usecase.ExportBackupUseCase
 import io.github.task320.earthstep.core.domain.usecase.ImportBackupUseCase
 import io.github.task320.earthstep.core.domain.usecase.ImportResult
 import io.github.task320.earthstep.core.domain.usecase.ResetProgressUseCase
+import io.github.task320.earthstep.core.domain.usecase.SyncResult
+import io.github.task320.earthstep.core.domain.usecase.SyncWithDriveUseCase
+import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,6 +34,8 @@ data class SettingsUiState(
     val strideLengthCm: Double = 0.0,
     val totalDistanceMeters: Long = 0L,
     val permissionState: PermissionState = PermissionState(),
+    val signedInAccount: GoogleAccount? = null,
+    val lastSyncedAt: Instant? = null,
 )
 
 /**
@@ -44,6 +52,12 @@ sealed interface BackupMessage {
     data object ImportFailed : BackupMessage
 }
 
+/** Drive同期(P7-7)の結果。一時的な表示のみで、「最終同期日時」は [SettingsUiState.lastSyncedAt] 側に永続化する(P7-9)。 */
+sealed interface DriveSyncMessage {
+    data class Synced(val addedMeters: Long) : DriveSyncMessage
+    data object Failed : DriveSyncMessage
+}
+
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
@@ -53,6 +67,9 @@ class SettingsViewModel @Inject constructor(
     private val backupFileStore: BackupFileStore,
     private val permissionChecker: PermissionChecker,
     private val timeSource: AppTimeSource,
+    private val googleAuthRepository: GoogleAuthRepository,
+    private val syncWithDrive: SyncWithDriveUseCase,
+    driveSyncStateRepository: DriveSyncStateRepository,
     progressRepository: ProgressRepository,
 ) : ViewModel() {
 
@@ -61,6 +78,9 @@ class SettingsViewModel @Inject constructor(
     private val _backupMessage = MutableStateFlow<BackupMessage?>(null)
     val backupMessage: StateFlow<BackupMessage?> = _backupMessage.asStateFlow()
 
+    private val _driveSyncMessage = MutableStateFlow<DriveSyncMessage?>(null)
+    val driveSyncMessage: StateFlow<DriveSyncMessage?> = _driveSyncMessage.asStateFlow()
+
     /** 書き出し先を選ぶときに提案するファイル名。 */
     fun suggestedFileName(): String = backupFileStore.suggestedFileName(timeSource.today().toString())
 
@@ -68,12 +88,16 @@ class SettingsViewModel @Inject constructor(
         settingsRepository.measurementEnabled,
         progressRepository.lifetimeStats,
         permissionState,
-    ) { enabled, stats, permissions ->
+        googleAuthRepository.signedInAccount,
+        driveSyncStateRepository.lastSyncedAt,
+    ) { enabled, stats, permissions, signedInAccount, lastSyncedAt ->
         SettingsUiState(
             measurementEnabled = enabled,
             strideLengthCm = stats.strideLengthCm,
             totalDistanceMeters = stats.totalDistanceMeters,
             permissionState = permissions,
+            signedInAccount = signedInAccount,
+            lastSyncedAt = lastSyncedAt,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -121,6 +145,34 @@ class SettingsViewModel @Inject constructor(
 
     fun clearBackupMessage() {
         _backupMessage.value = null
+    }
+
+    /** サインインの結果をアカウント状態へ反映する(P7-6)。実際のサインイン処理は [GoogleSignIn] が担う。 */
+    fun onSignedIn(account: GoogleAccount) {
+        viewModelScope.launch { googleAuthRepository.setSignedInAccount(account) }
+    }
+
+    fun signOut() {
+        viewModelScope.launch { googleAuthRepository.setSignedInAccount(null) }
+    }
+
+    /** Driveと同期する(P7-7)。認可トークンの取得は [GoogleDriveAuthorization] が担う。 */
+    fun sync(accessToken: String) {
+        viewModelScope.launch {
+            _driveSyncMessage.value = when (val result = syncWithDrive(accessToken)) {
+                is SyncResult.Success -> DriveSyncMessage.Synced(result.addedMeters)
+                SyncResult.Failed -> DriveSyncMessage.Failed
+            }
+        }
+    }
+
+    fun clearDriveSyncMessage() {
+        _driveSyncMessage.value = null
+    }
+
+    /** 認可(同意画面を含む)そのものに失敗したときに呼ぶ。実行は [GoogleDriveAuthorization] が担う。 */
+    fun onDriveAuthorizationFailed() {
+        _driveSyncMessage.value = DriveSyncMessage.Failed
     }
 
     private companion object {

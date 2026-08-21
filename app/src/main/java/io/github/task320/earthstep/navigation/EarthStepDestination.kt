@@ -1,18 +1,11 @@
 package io.github.task320.earthstep.navigation
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.vector.ImageVector
 import io.github.task320.earthstep.R
 
 /**
  * 画面遷移先(P5-15)。
  *
- * アイコンは Material の既定を使う。ドット絵のアイコン素材は P6-4 で差し替える。
+ * アイコンはドット絵素材(P6-4)。
  */
 enum class EarthStepDestination(val route: String, val labelRes: Int) {
     ONBOARDING("onboarding", R.string.nav_home),
@@ -28,10 +21,9 @@ enum class EarthStepDestination(val route: String, val labelRes: Int) {
     }
 }
 
-@Composable
-fun EarthStepDestination.icon(): ImageVector = when (this) {
-    EarthStepDestination.MAP -> Icons.Filled.Place
-    EarthStepDestination.COLLECTION -> Icons.Filled.List
-    EarthStepDestination.SETTINGS -> Icons.Filled.Settings
-    else -> Icons.Filled.Home
+fun EarthStepDestination.iconRes(): Int = when (this) {
+    EarthStepDestination.MAP -> R.drawable.ic_tab_map
+    EarthStepDestination.COLLECTION -> R.drawable.ic_tab_records
+    EarthStepDestination.SETTINGS -> R.drawable.ic_tab_settings
+    else -> R.drawable.ic_tab_home
 }

@@ -125,6 +125,7 @@ object MilestoneCatalog {
             distanceMeters = Earth.CIRCUMFERENCE_METERS,
             name = "地球一周達成 🏁",
             isMajor = true,
+            description = "赤道に沿って地球をぐるりと1周踏破!40,075km、あなたの足跡が地球を完全に包み込みました。",
         ),
     )
 

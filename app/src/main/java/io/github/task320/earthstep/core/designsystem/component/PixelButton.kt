@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.style.TextAlign
+import io.github.task320.earthstep.core.common.sound.SoundEffects
 import io.github.task320.earthstep.core.designsystem.theme.PixelPalette
 
 /** 角丸を持たないボタン(P5-1)。 */
@@ -23,7 +24,10 @@ fun PixelButton(
     contentColor: Color = PixelPalette.Night,
 ) {
     Button(
-        onClick = onClick,
+        onClick = {
+            SoundEffects.play(SoundEffects.Sound.TAP)
+            onClick()
+        },
         modifier = modifier,
         enabled = enabled,
         shape = RectangleShape,
@@ -39,7 +43,14 @@ fun PixelButton(
 /** 補助操作用。枠を持たず文字だけで見せる。 */
 @Composable
 fun PixelTextButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    TextButton(onClick = onClick, modifier = modifier, shape = RectangleShape) {
+    TextButton(
+        onClick = {
+            SoundEffects.play(SoundEffects.Sound.TAP)
+            onClick()
+        },
+        modifier = modifier,
+        shape = RectangleShape,
+    ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,

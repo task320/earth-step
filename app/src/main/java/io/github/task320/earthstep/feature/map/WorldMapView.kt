@@ -39,7 +39,7 @@ fun WorldMapView(
             .aspectRatio(WorldMapDots.COLUMNS.toFloat() / WorldMapDots.ROWS),
     ) {
         val dotSize = size.width / WorldMapDots.COLUMNS
-        pixelCanvas(dotSize = dotSize) {
+        pixelCanvas(dotSize = dotSize, gridColumns = WorldMapDots.COLUMNS, gridRows = WorldMapDots.ROWS) {
             rect(0, 0, WorldMapDots.COLUMNS, WorldMapDots.ROWS, oceanColor)
 
             for (row in 0 until WorldMapDots.ROWS) {

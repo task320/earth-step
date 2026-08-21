@@ -1,0 +1,19 @@
+# EarthStep 同梱アセットのライセンス一覧
+
+P6(アセット制作)で納品された素材のライセンスをまとめる(仕様: `docs/ASSETS.md` 項目G / `docs/TASKS.md` P6-6)。
+自作素材の場合も「自作」と明記する。商用利用不可・改変不可の素材は採用していない。
+
+| 素材 | 名称 / 配置先 | 作者 | 配布元URL | ライセンス | 必要なクレジット表記 |
+|---|---|---|---|---|---|
+| 通常達成音 | `res/raw/se_milestone.ogg` | 自作 (AI Assistant) | 自作 | CC0 1.0 Universal / Public Domain | 不要(任意) |
+| 大台達成音 | `res/raw/se_major.ogg` | 自作 (AI Assistant) | 自作 | CC0 1.0 Universal / Public Domain | 不要(任意) |
+| 操作タップ音 | `res/raw/se_tap.ogg` | 自作 (AI Assistant) | 自作 | CC0 1.0 Universal / Public Domain | 不要(任意) |
+| ドット世界地図 | `WorldMapDots.kt` の陸地マスク配列(144x72) | 自作 (AI Assistant) | 自作 | CC0 1.0 Universal / Public Domain | 不要(任意) |
+| タブアイコン(ホーム/マップ/記録/設定) | `res/drawable/ic_tab_*.png` | 自作 (AI Assistant) | 自作 | CC0 1.0 Universal / Public Domain | 不要(任意) |
+| 通知アイコン | `res/drawable/ic_notification.xml` | 自作 (AI Assistant) | 自作 | CC0 1.0 Universal / Public Domain | 不要(任意) |
+| アプリアイコン前景 | `res/mipmap-xxxhdpi/ic_launcher_foreground.png` | 自作 (AI Assistant) | 自作 | CC0 1.0 Universal / Public Domain | 不要(任意) |
+| ストアアイコン / フィーチャーグラフィック | `docs/store/store_icon_512.png`, `docs/store/feature_graphic_1024x500.png`(P9で使用) | 自作 (AI Assistant) | 自作 | CC0 1.0 Universal / Public Domain | 不要(任意) |
+| ドットフォント | `res/font/pixelmplus12_regular.ttf`(Boldは同梱していない。理由はTASKS.md参照) | itouhiro / M+ FONTS PROJECT | https://github.com/itouhiro/PixelMplus | M+ FONT LICENSE(商用利用・改変自由) | 不要(任意) |
+
+商用利用・改変・再配布すべて自由。PixelMplusのみ配布元が別著作者(itouhiro / M+ FONTS PROJECT)であり、
+ライセンス全文は https://github.com/itouhiro/PixelMplus のリポジトリを参照。

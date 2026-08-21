@@ -13,18 +13,19 @@ import io.github.task320.earthstep.core.domain.progress.LapMarker
  *
  * @param titleRes 見出し。
  * @param name マイルストーン名など、見出しに差し込む語。
- * @param descriptionRes 大台演出で出す一言説明。無ければ null。
+ * @param descriptionRes 大台演出で出す一言説明(文字列リソース)。無ければ null。
+ * @param descriptionText 大台演出で出す一言説明(`Milestone.description` 由来のリテラル文字列)。無ければ null。
+ *   [descriptionRes] と同時に埋まることはない。
  */
-data class CelebrationContent(val titleRes: Int, val name: String, val descriptionRes: Int?, val isMajor: Boolean) {
+data class CelebrationContent(
+    val titleRes: Int,
+    val name: String,
+    val descriptionRes: Int?,
+    val isMajor: Boolean,
+    val descriptionText: String? = null,
+) {
     companion object {
 
-        /**
-         * 演出1件ぶんの文言を決める。
-         *
-         * マイルストーンの一言説明(仕様3.4)は未執筆のため、
-         * 現状 [descriptionRes] が埋まるのは周内マーカーだけ。
-         * 文面が決まったら `Milestone.description` から引くように変える。
-         */
         fun of(celebration: PendingCelebration): CelebrationContent = when (celebration) {
             is PendingCelebration.Milestone -> {
                 val milestone = MilestoneCatalog.byIndex(celebration.milestoneIndex)
@@ -32,6 +33,7 @@ data class CelebrationContent(val titleRes: Int, val name: String, val descripti
                     titleRes = R.string.celebration_milestone_title,
                     name = milestone?.name.orEmpty(),
                     descriptionRes = null,
+                    descriptionText = milestone?.description,
                     isMajor = milestone?.isMajor == true,
                 )
             }

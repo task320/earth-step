@@ -12,9 +12,13 @@ import com.google.common.truth.Truth.assertThat
 import io.github.task320.earthstep.R
 import io.github.task320.earthstep.core.common.format.DistanceFormatter
 import io.github.task320.earthstep.core.designsystem.theme.EarthStepTheme
+import io.github.task320.earthstep.core.domain.model.GoogleAccount
 import io.github.task320.earthstep.core.domain.permission.AppPermission
 import io.github.task320.earthstep.core.domain.permission.PermissionRequirements
 import io.github.task320.earthstep.core.domain.permission.PermissionState
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -157,32 +161,186 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `クラウド同期が未実装であることを伝える`() {
+    fun `未サインインならサインインボタンを出す`() {
         setContent()
 
-        composeRule.onNodeWithText(string(R.string.settings_sync_pending))
+        composeRule.onNodeWithText(string(R.string.settings_cloud_sync_signin))
             .performScrollTo()
             .assertIsDisplayed()
     }
 
+    @Test
+    fun `サインインを押すと呼ばれる`() {
+        var signedIn = false
+        setContent(onSignIn = { signedIn = true })
+
+        composeRule.onNodeWithText(string(R.string.settings_cloud_sync_signin))
+            .performScrollTo()
+            .performClick()
+
+        assertThat(signedIn).isTrue()
+    }
+
+    @Test
+    fun `サインイン済みならメールアドレスとサインアウトを出す`() {
+        setContent(
+            uiState = SettingsUiState(
+                signedInAccount = GoogleAccount(id = "1", email = "walker@example.com", displayName = "Walker"),
+            ),
+        )
+
+        composeRule.onNodeWithText(string(R.string.settings_cloud_sync_signed_in_as, "walker@example.com"))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(string(R.string.settings_cloud_sync_signout))
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `サインアウトを押すと呼ばれる`() {
+        var signedOut = false
+        setContent(
+            uiState = SettingsUiState(
+                signedInAccount = GoogleAccount(id = "1", email = "walker@example.com", displayName = null),
+            ),
+            onSignOut = { signedOut = true },
+        )
+
+        composeRule.onNodeWithText(string(R.string.settings_cloud_sync_signout))
+            .performScrollTo()
+            .performClick()
+
+        assertThat(signedOut).isTrue()
+    }
+
+    @Test
+    fun `サインインに失敗したら理由を出す`() {
+        setContent(signInFailed = true)
+
+        composeRule.onNodeWithText(string(R.string.settings_cloud_sync_signin_failed))
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `サインイン済みなら今すぐ同期ボタンを出す`() {
+        setContent(
+            uiState = SettingsUiState(
+                signedInAccount = GoogleAccount(id = "1", email = "walker@example.com", displayName = null),
+            ),
+        )
+
+        composeRule.onNodeWithText(string(R.string.settings_cloud_sync_action))
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `今すぐ同期を押すと呼ばれる`() {
+        var synced = false
+        setContent(
+            uiState = SettingsUiState(
+                signedInAccount = GoogleAccount(id = "1", email = "walker@example.com", displayName = null),
+            ),
+            onSync = { synced = true },
+        )
+
+        composeRule.onNodeWithText(string(R.string.settings_cloud_sync_action))
+            .performScrollTo()
+            .performClick()
+
+        assertThat(synced).isTrue()
+    }
+
+    @Test
+    fun `同期で増えた距離を出す`() {
+        setContent(
+            uiState = SettingsUiState(
+                signedInAccount = GoogleAccount(id = "1", email = "walker@example.com", displayName = null),
+            ),
+            driveSyncMessage = DriveSyncMessage.Synced(addedMeters = 3_200L),
+        )
+
+        composeRule.onNodeWithText(
+            string(R.string.settings_cloud_sync_synced, DistanceFormatter.formatDistance(3_200L)),
+        ).performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun `サインイン済みで未同期ならその旨を出す`() {
+        setContent(
+            uiState = SettingsUiState(
+                signedInAccount = GoogleAccount(id = "1", email = "walker@example.com", displayName = null),
+            ),
+        )
+
+        composeRule.onNodeWithText(string(R.string.settings_cloud_sync_never_synced))
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `最終同期日時を出す`() {
+        val syncedAt = Instant.parse("2026-08-22T04:00:00Z")
+        setContent(
+            uiState = SettingsUiState(
+                signedInAccount = GoogleAccount(id = "1", email = "walker@example.com", displayName = null),
+                lastSyncedAt = syncedAt,
+            ),
+        )
+
+        val formatted = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm").format(syncedAt.atZone(ZoneId.systemDefault()))
+        composeRule.onNodeWithText(string(R.string.settings_cloud_sync_last_synced_at, formatted))
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `同期に失敗したら理由を出す`() {
+        setContent(
+            uiState = SettingsUiState(
+                signedInAccount = GoogleAccount(id = "1", email = "walker@example.com", displayName = null),
+            ),
+            driveSyncMessage = DriveSyncMessage.Failed,
+        )
+
+        composeRule.onNodeWithText(string(R.string.settings_cloud_sync_failed))
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    // このテストヘルパーはSettingsScreenの引数をそのまま横流しするだけなので、
+    // 数が多くても分割するとかえって呼び出し側との対応が追いにくくなる。
+    @Suppress("LongParameterList")
     private fun setContent(
         uiState: SettingsUiState = SettingsUiState(),
         backupMessage: BackupMessage? = null,
+        driveSyncMessage: DriveSyncMessage? = null,
+        signInFailed: Boolean = false,
         onExport: () -> Unit = {},
         onImport: () -> Unit = {},
         onReset: () -> Unit = {},
+        onSignIn: () -> Unit = {},
+        onSignOut: () -> Unit = {},
+        onSync: () -> Unit = {},
     ) {
         composeRule.setContent {
             EarthStepTheme {
                 SettingsScreen(
                     uiState = uiState,
                     backupMessage = backupMessage,
+                    driveSyncMessage = driveSyncMessage,
+                    signInFailed = signInFailed,
                     onMeasurementEnabledChange = {},
                     onOpenAppSettings = {},
                     onOpenBatterySettings = {},
                     onExport = onExport,
                     onImport = onImport,
                     onReset = onReset,
+                    onSignIn = onSignIn,
+                    onSignOut = onSignOut,
+                    onSync = onSync,
                 )
             }
         }
