@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
+import io.github.task320.earthstep.core.common.log.CrashlyticsLogTree
 import io.github.task320.earthstep.core.common.log.ReleaseLogTree
 import io.github.task320.earthstep.core.common.sound.SoundEffects
 import io.github.task320.earthstep.core.data.work.DriveSyncScheduler
@@ -24,6 +25,7 @@ class EarthStepApplication :
     override fun onCreate() {
         super.onCreate()
         Timber.plant(if (BuildConfig.DEBUG) Timber.DebugTree() else ReleaseLogTree())
+        Timber.plant(CrashlyticsLogTree())
         SoundEffects.init(this)
         DriveSyncScheduler.schedule(this)
     }

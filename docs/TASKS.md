@@ -378,7 +378,21 @@ Google Cloud のクライアントID発行が前提だったため後回しに�
 | P8-5 | 長時間安定性 | 24〜72時間連続稼働でのプロセス死・メモリリーク・サービス復帰を確認 | P3-6 | 1d |
 | P8-6 | 端末マトリクス検証 | Android 13/14/15+、歩数センサー非搭載端末、複数メーカー | P3-5 | 1d |
 | P8-7 | UIテスト ✅ 実装済み (2026-08-20) | Compose UIテストで主要画面と演出フローを自動化 | P5-15 | 1d |
-| P8-8 | Crash計測 | Crashlytics 等の導入(位置情報を送らない設定) | P0-6 | 0.5d |
+| P8-8 | Crash計測 ✅ 実装済み・実機検証済み (2026-08-22, Pixel 9a) | Crashlytics 等の導入(位置情報を送らない設定) | P0-6 | 0.5d |
+
+### P8-8 の実装メモ
+
+| 決めたこと | 理由 |
+|---|---|
+| Firebaseアプリは `io.github.task320.earthstep` と `.debug` の2つを同一プロジェクトへ登録 | `applicationIdSuffix = ".debug"` でパッケージ名が変わるため、1つだけ登録すると片方のビルドで `google-services.json` が一致せずCrashlyticsが機能しない |
+| Google Analyticsは無効のまま | Crashlytics単体はAnalytics無しで動作する(SDK側の制約が撤廃済み)。位置情報を含め収集経路を増やさない方針(P0-6)に合わせた |
+| debugビルドでも収集を無効化しない | このプロジェクトはPixel 9a実機でdebugビルドをそのまま長期稼働させて検証する(P8-5)運用のため、開発ノイズ除去を優先してdebugだけ収集OFFにする一般的なテンプレートは採用しなかった |
+| `CrashlyticsLogTree` を新設し、既存の `DebugTree`/`ReleaseLogTree` と並行してplant | クラッシュ(未捕捉例外)はSDKが自動収集するが、それとは別にWARN以上のTimberログ・捕捉済み例外もCrashlyticsの非致命的ログとして残したかったため。既存のTreeを差し替えるのではなく追加する形にして、既存のログ方針(P0-6)への影響を避けた |
+| ログ本文へ緯度・経度を出さない方針(P0-6, `ReleaseLogTree`)はCrashlytics転送でもそのまま前提にする | 転送先が増えても収集して良い情報の範囲は変わらないため、`CrashlyticsLogTree` 側では何もフィルタせずログ文字列をそのまま渡している |
+
+**実機検証済み(2026-08-22, Pixel 9a)**: `adb shell am crash` で強制クラッシュさせ、次回起動時に
+Crashlyticsが検知して `crashlyticsreports-pa.googleapis.com` へアップロードするログを確認。
+クラッシュ後もMeasurementServiceがフォアグラウンドへ自動復帰すること(P3-6)も併せて確認できた。
 
 ### P8-7 の実装メモ
 
