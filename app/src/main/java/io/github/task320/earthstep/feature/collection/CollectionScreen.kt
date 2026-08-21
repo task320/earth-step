@@ -143,7 +143,6 @@ private fun MilestoneDetail(row: MilestoneRow, contentColor: Color, modifier: Mo
         modifier = modifier.padding(top = PixelDimens.SpaceSmall),
         verticalArrangement = Arrangement.spacedBy(PixelDimens.Unit),
     ) {
-        // 一言説明は未執筆(docs 要確認事項1)。文面が入るまでは行ごと出さない。
         row.milestone.description?.let { description ->
             Text(text = description, style = MaterialTheme.typography.bodySmall, color = contentColor)
         }

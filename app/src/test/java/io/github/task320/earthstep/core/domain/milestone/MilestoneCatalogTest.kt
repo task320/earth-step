@@ -48,7 +48,7 @@ class MilestoneCatalogTest {
 
     @Test
     fun `大台フラグは100番のみに立つ`() {
-        // P1-6: 大台を追加する場合はこのテストも更新する(docs 要確認事項2)。
+        // 大台演出は生涯1回でよいとユーザーが判断(docs/TASKS.md 要確認事項2、2026-08-22決定)。
         assertThat(milestones.filter { it.isMajor }.map { it.index }).containsExactly(MilestoneCatalog.SIZE)
     }
 

@@ -56,9 +56,12 @@ fun HomeRoute(modifier: Modifier = Modifier, viewModel: HomeViewModel = hiltView
 /**
  * ホーム画面(P5-3)。
  *
- * 出す数字は 累計距離・XP・当日距離・周回数・次のマイルストーンまでの距離 と進捗バー。
- * 一番大きく出すのは累計距離。このゲームで積み上がるのはそれだけで、
- * XPは同じ値の別表現でしかないため、同じ大きさで2つ並べると視線が散る。
+ * 出す数字は 累計距離・当日距離・周回数・次のマイルストーンまでの距離 と進捗バー。
+ * 一番大きく出すのは累計距離。
+ *
+ * XP(経験値)はP10-4で表示から外した(2026-08-22)。累計距離と同じ値の別表現でしかなく、
+ * 消費先も無いまま並べると視線が散るため。計算・蓄積(`ProgressSummary.xp`)自体は
+ * 将来のスキン/特典交換に備えて継続している。
  */
 @Composable
 fun HomeScreen(uiState: HomeUiState, onOpenSettings: () -> Unit, modifier: Modifier = Modifier) {
@@ -114,11 +117,6 @@ private fun TotalDistancePanel(progress: ProgressSummary, measuring: Boolean, mo
             text = DistanceFormatter.formatDistance(progress.totalDistanceMeters),
             style = MaterialTheme.typography.displaySmall,
             color = PixelPalette.Gold,
-        )
-        Text(
-            text = DistanceFormatter.formatXp(progress.xp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = PixelPalette.Mist,
         )
 
         Row(

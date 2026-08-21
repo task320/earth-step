@@ -36,16 +36,24 @@ class HomeScreenTest {
     private val allPermissions = PermissionRequirements.requiredOn(sdkInt = 33)
 
     @Test
-    fun `累計距離とXPと当日距離と周回数が並ぶ`() {
+    fun `累計距離と当日距離と周回数が並ぶ`() {
         // P5-3 が出すと決めた数値がすべて画面にあること。
         setContent(ProgressSummary.of(totalDistanceMeters = 12_345L, todayDistanceMeters = 2_460L))
 
         composeRule.onNodeWithText(DistanceFormatter.formatDistance(12_345L)).assertIsDisplayed()
-        composeRule.onNodeWithText(DistanceFormatter.formatXp(12_345L)).assertIsDisplayed()
         composeRule.onNodeWithText(
             string(R.string.home_today_distance_label) + " " + DistanceFormatter.formatDistance(2_460L),
         ).assertIsDisplayed()
         composeRule.onNodeWithText(string(R.string.home_lap_label, 1)).assertIsDisplayed()
+    }
+
+    @Test
+    fun `XPは画面に表示しない`() {
+        // P10-4: 消費先が無く累計距離と同じ数字の別表現になるため、ホームからは非表示にした。
+        // 計算・蓄積自体はProgressSummary.xpとして継続している(将来のスキン/特典交換に備える)。
+        setContent(ProgressSummary.of(totalDistanceMeters = 12_345L, todayDistanceMeters = 2_460L))
+
+        composeRule.onNodeWithText(DistanceFormatter.formatXp(12_345L)).assertDoesNotExist()
     }
 
     @Test

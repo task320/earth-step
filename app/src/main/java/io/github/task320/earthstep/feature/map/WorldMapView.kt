@@ -1,9 +1,16 @@
 package io.github.task320.earthstep.feature.map
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,6 +40,17 @@ fun WorldMapView(
     val trail = WorldMapTrail.of(lapRatio)
     val trailColor = lapSkin.trailColor()
 
+    val blinkTransition = rememberInfiniteTransition(label = "currentLocationBlink")
+    val blinkAlpha by blinkTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 0.25f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 550, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "currentLocationBlinkAlpha",
+    )
+
     Canvas(
         modifier = modifier
             .fillMaxWidth()
@@ -58,13 +76,13 @@ fun WorldMapView(
                 dot(column, WorldMapDots.EQUATOR_ROW, trailColor)
             }
 
-            // 現在地は3x3のドットで、トレイルより1段明るく置く。
+            // 現在地は3x3のドットで、トレイルより1段明るく置く。点滅させて現在地だとわかりやすくする。
             rect(
                 column = (trail.headColumn - 1).coerceAtLeast(0),
                 row = WorldMapDots.EQUATOR_ROW - 1,
                 widthDots = HEAD_SIZE_DOTS,
                 heightDots = HEAD_SIZE_DOTS,
-                color = PixelPalette.Bone,
+                color = PixelPalette.Bone.copy(alpha = blinkAlpha),
             )
         }
     }
