@@ -122,6 +122,7 @@ class MeasurementEngine @Inject constructor(
 
         if (input is MeasurementInput.Location) {
             intervalMillis.value = outcome.intervalMillis
+            logLocationDebug(input, outcome)
         }
         if (abs(outcome.strideLengthCm - persistedStrideCm) >= STRIDE_PERSIST_THRESHOLD_CM) {
             persistedStrideCm = outcome.strideLengthCm
@@ -156,6 +157,29 @@ class MeasurementEngine @Inject constructor(
             progressRepository.setStrideLengthCm(processor.strideLengthCm)
         }
         _status.value = _status.value.copy(running = false)
+    }
+
+    /**
+     * P8-1実地検証(距離が体感より速い件)の一時診断ログ。原因特定後に削除すること。
+     * P0-6の方針どおり緯度・経度は出さず、精度・速度・採否など集計値のみ出す。
+     */
+    private fun logLocationDebug(input: MeasurementInput.Location, outcome: MeasurementProcessor.Outcome) {
+        val sample = input.sample
+        val speedKmh = sample.speedMetersPerSecond?.let { it * MPS_TO_KMH }
+        val speedText = speedKmh?.let { "%.1fkm/h".format(it) } ?: "n/a"
+        Timber.d(
+            "[P8-1診断] acc=%.1fm speed=%s mode=%s state=%s rejection=%s " +
+                "pending=%.1fm confirmed=%.1fm stride=%.1fcm interval=%dms",
+            sample.accuracyMeters,
+            speedText,
+            outcome.mode,
+            outcome.movementState,
+            outcome.rejection,
+            outcome.pendingMeters,
+            outcome.confirmedMeters,
+            outcome.strideLengthCm,
+            outcome.intervalMillis,
+        )
     }
 
     private suspend fun persist(meters: Long, timestampMillis: Long, dailyCap: DailySoftCap) {
@@ -211,5 +235,8 @@ class MeasurementEngine @Inject constructor(
         const val TRANSITION_CONFIDENCE = 100
 
         const val TICK_INTERVAL_MILLIS = 5_000L
+
+        /** m/s を km/h へ換算する係数。 */
+        const val MPS_TO_KMH = 3.6
     }
 }
